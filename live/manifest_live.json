@@ -9,12 +9,12 @@
   "models": [
     "timesfm_3_0"
   ],
-  "python": "3.12.2",
-  "platform": "Windows-11-10.0.26200-SP0",
-  "started": "2026-11-06T17:13:47",
-  "finished": "2026-11-06T17:13:47",
+  "python": "3.12.16",
+  "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43",
+  "started": "2026-11-06T16:23:02",
+  "finished": "2026-11-06T16:23:02",
   "wall_seconds": null,
   "per_model_seconds": {
-    "timesfm_3_0": 4.3943025999979
+    "timesfm_3_0": 0.0
   }
 }
