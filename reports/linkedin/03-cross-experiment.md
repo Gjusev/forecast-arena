@@ -15,7 +15,7 @@ Same models: Mistral Timestral 28M & 209M, Amazon Chronos-2, Google TimesFM
 3.0 — all zero-shot — plus LightGBM, XGBoost, seasonal naive.
 
 On trains, everyone serious beat naive by ~30%... and the gap between
-foundation models and laptop-trained gradient boosting was 0.08 minutes.
+foundation models and laptop-trained gradient boosting was 0.07 minutes.
 Statistically significant, operationally irrelevant.
 
 On electricity, foundation models beat naive by 31–33% and the GBMs by

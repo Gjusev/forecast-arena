@@ -40,7 +40,7 @@ Fixed midday schedule ...... 236.7 €/day
 Model-scheduled ............ 196.6 €/day  (−17%)
 Oracle (perfect foresight) . 182.8 €/day
 
-The model captures 75% of what perfect foresight would give. Not bad for an
+The model captures 74% of what perfect foresight would give. Not bad for an
 out-of-the-box model running on a CPU.
 
 Honest caveats: this is wholesale market cost, not your household bill

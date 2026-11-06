@@ -1,16 +1,117 @@
-# forecast-arena — AI vs Reality
+<p align="center">
+  <a href="https://huggingface.co/spaces/Gjusev/forecast-arena">
+    <img src="assets/brand/banner.png" alt="AI vs Reality: eight forecasting models, two real German systems, every number published" width="100%">
+  </a>
+</p>
 
-> **Real Data. Real Predictions. Real Results.**
+<p align="center">
+  <a href="https://huggingface.co/spaces/Gjusev/forecast-arena"><b>Live demo</b></a> ·
+  <a href="reports/01-train-delays.md">Train delays report</a> ·
+  <a href="reports/02-electricity-prices.md">Electricity report</a> ·
+  <a href="assets/video/forecast-arena.mp4">Watch the 33-second film</a>
+</p>
 
-An open benchmark that tests whether time series foundation models actually
-outperform traditional methods on real world forecasting problems — with
-reproducible code, honest protocols, and published failures alongside wins.
+<p align="center">
+  <a href="https://github.com/Gjusev/forecast-arena/actions/workflows/ci.yaml"><img src="https://github.com/Gjusev/forecast-arena/actions/workflows/ci.yaml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/license-MIT-0b0b0b" alt="MIT license">
+  <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12-0b0b0b" alt="Python 3.11 | 3.12">
+</p>
 
-## The question
+# forecast-arena
 
-**"Can modern AI forecasting models beat classical methods on real, messy
-operational data?"** Vendors report wins on academic benchmarks. We re-test
-that claim on two problems Germany runs on: trains and electricity.
+**Real data. Real predictions. Real results.** An open benchmark that tests
+whether time series foundation models actually beat traditional methods on real,
+messy operational data, with reproducible code, leakage-guarded protocols, and
+the failures published next to the wins.
+
+Vendors report wins on academic benchmarks. We re-test that claim on two systems
+Germany runs on: **Deutsche Bahn train delays** and **day-ahead electricity prices**.
+
+<p align="center">
+  <a href="assets/video/forecast-arena.mp4">
+    <img src="assets/video/preview.gif" alt="33-second motion summary: forecasts miss a 61-minute delay in Frankfurt, the train leaderboard is a dead heat, foundation models catch a negative-price Sunday and win on power prices, and forecast-based scheduling saves 40.2 euros a day" width="100%">
+  </a>
+  <br><sub>Click for the full-resolution MP4 (1080p, 33 s). Every number comes from <code>assets/video/story.json</code>, exported from the committed results.</sub>
+</p>
+
+## What we found
+
+### 1. Trains: everyone misses the same disruption
+
+<img src="assets/video/stills/01-trains-miss.png" alt="Frankfurt Hbf, 5 Feb 2026: reality reached 61 minutes average delay in the first hour while six models forecast between 1.5 and 7.1 minutes" width="100%">
+
+The worst hour in the test window: Frankfurt (Main) Hbf, 5 Feb 2026. Average
+arrival delay hit **61 min**; six models forecast **1.5 to 7.1 min**. Hourly
+aggregates alone cannot see an incident coming, whichever model reads them.
+
+### 2. Trains: a dead heat over 550 forecasts
+
+<img src="assets/video/stills/02-trains-board.png" alt="Train delay leaderboard: foundation models 1.84 to 1.90 minutes MAE, gradient boosting 1.92 to 1.93, seasonal naive 2.76" width="100%">
+
+MAE in minutes, 1 hour ahead, 5 hub stations × 110 rolling origins, vs **seasonal naive 2.76**:
+
+| Model | MAE | Skill vs naive | 80%-interval coverage |
+|---|---|---|---|
+| Timestral 209M | **1.84** | +33.2% | 0.78 |
+| Timestral 28M | 1.87 | +32.4% | 0.77 |
+| Chronos-2 | 1.89 | +31.4% | 0.76 |
+| TimesFM 3.0 | 1.90 | +31.4% | 0.79 |
+| LightGBM | 1.92 | +30.7% | — |
+| XGBoost | 1.93 | +30.2% | — |
+
+Every serious model beats naive by ~30% (p < 1e-8), but the best foundation model
+and laptop-trained gradient boosting are **0.07 minutes** apart.
+
+### 3. Power: the models saw the free-power Sunday coming
+
+<img src="assets/video/stills/03-power-catch.png" alt="Sunday 7 July 2024: 17 hours of negative day-ahead prices; Timestral 209M and LightGBM both forecast the dip below zero a day ahead" width="100%">
+
+An illustrative solar Sunday (7 July 2024, chosen because it shows the mechanism
+clearly): 17 hours below zero, forecast the morning before the auction. The
+aggregate numbers below are the honest test.
+
+### 4. Power: over 1,408 days, foundation models win
+
+<img src="assets/video/stills/04-power-board.png" alt="Power leaderboard: foundation models reduce error 31 to 33 percent vs naive, gradient boosting 17 to 19 percent; negative-price F1 0.57 vs 0.23" width="100%">
+
+MAE €/MWh pooled over all 24 delivery hours, 1,408 daily pre-auction origins (2021–2026), vs **seasonal naive 28.20**:
+
+| Model | MAE | Skill vs naive | Neg-price F1 |
+|---|---|---|---|
+| Chronos-2 | **19.27** | +33.1% | 0.50 |
+| Timestral 209M | 19.53 | +32.4% | **0.57** |
+| TimesFM 3.0 | 19.82 | +31.2% | 0.48 |
+| Timestral 28M | 19.82 | +31.6% | 0.53 |
+| XGBoost | 23.48 | +19.1% | 0.23 |
+| LightGBM | 24.14 | +17.2% | 0.19 |
+
+The opposite of the delays result: foundation models clearly beat gradient
+boosting (+31–33% vs +17–19%), and GBMs are nearly blind to negative-price hours.
+
+### 5. Does it pay? On wholesale prices, yes
+
+<img src="assets/video/stills/05-money.png" alt="Scheduling 4 MWh a day on Chronos-2 forecasts costs 196.6 euros a day vs 236.7 for fixed midday hours, a saving of 40.2 euros a day and 74 percent of the perfect-foresight saving" width="100%">
+
+Scheduling 4 MWh of flexible daily load on the best model's forecast saved
+**40.2 €/day (−17%)** vs a fixed midday schedule, capturing **74% of the
+perfect-foresight saving** (wholesale costs only, not household bills).
+
+Publication charts: [`assets/charts/`](assets/charts/) · full reports: [`reports/`](reports/).
+
+## Explore it yourself
+
+The [live demo on Hugging Face Spaces](https://huggingface.co/spaces/Gjusev/forecast-arena)
+reads the same committed result files:
+
+- **Replay a forecast.** Scrub through every forecast origin, pick your
+  contenders, call the winner, then reveal what really happened.
+- **Leaderboard.** Rank by error or skill, per horizon, with runtimes.
+- **Head to head.** Any two models, every forecast as one dot, win rate.
+- **Does it pay?** Cumulative scheduling savings per model against perfect foresight.
+
+```bash
+uv run --extra dashboard python dashboard/app.py   # -> http://localhost:7860
+```
 
 ## Experiments
 
@@ -27,56 +128,8 @@ that claim on two problems Germany runs on: trains and electricity.
 | Traditional ML | **LightGBM**, **XGBoost** (lag + calendar features, retrained per origin) |
 | Statistical baselines | **Seasonal naive (24h)**, **hour-of-week climatology** |
 
-Every model receives *identical* information at every forecast origin —
-see the methodology below.
-
-## Headline results
-
-All numbers below come from committed prediction files — full technical
-reports: [train delays](reports/01-train-delays.md),
-[electricity](reports/02-electricity-prices.md).
-
-### Train delays (5 hub stations, 110 rolling origins, 2024–2026)
-
-MAE in minutes, 1 hour ahead, vs **seasonal naive 2.76**:
-
-| Model | MAE | Skill vs naive | 80%-interval coverage |
-|---|---|---|---|
-| Timestral 209M | **1.84** | +33.2% | 0.78 |
-| Timestral 28M | 1.87 | +32.4% | 0.77 |
-| Chronos-2 | 1.89 | +31.4% | 0.76 |
-| TimesFM 3.0 | 1.90 | +31.4% | 0.79 |
-| LightGBM | 1.92 | +30.7% | — |
-| XGBoost | 1.93 | +30.2% | — |
-
-**Reading:** every serious model beats naive by ~30% (p < 1e-8) — but
-foundation models and laptop-trained gradient boosting are separated by
-0.08 minutes. On the worst disruption day in the window (Frankfurt, 2026-02-05,
-60+ min average delay), *all* models forecast a flat 5–10 min day.
-
-### Electricity prices (DE-LU day-ahead, 1,408 daily pre-auction origins, 2021–2026)
-
-MAE €/MWh pooled over all 24 delivery hours, vs **seasonal naive 28.20**:
-
-| Model | MAE | Skill vs naive | Neg-price F1 |
-|---|---|---|---|
-| Chronos-2 | **19.27** | +33.1% | 0.50 |
-| Timestral 209M | 19.53 | +32.4% | **0.57** |
-| TimesFM 3.0 | 19.82 | +31.2% | 0.48 |
-| Timestral 28M | 19.82 | +31.6% | 0.53 |
-| XGBoost | 23.48 | +19.1% | 0.23 |
-| LightGBM | 24.14 | +17.2% | 0.19 |
-
-**Reading:** here foundation models *do* clearly beat gradient boosting
-(+31–33% vs +17–19%) — the opposite of the delays result. Scheduling 4 MWh
-of flexible daily load on the best model's forecast saved **40.2 €/day
-(−17%)** vs a fixed midday schedule, capturing **75% of the perfect-foresight
-oracle's** saving (wholesale costs only — not household bills). GBMs were
-nearly blind to negative-price hours; foundation models detect them at
-F1 ≈ 0.5–0.57.
-
-Charts: [`assets/charts/`](assets/charts/) · full reports:
-[`reports/`](reports/).
+Every model receives *identical* information at every forecast origin; see the
+methodology below.
 
 ## Methodology (short version)
 
@@ -112,14 +165,23 @@ uv run --extra ml --extra foundation arena run 02 --tier smoke
 uv run pytest tests -q
 ```
 
-## Dashboard
+## Brand and media
+
+| Asset | File |
+|---|---|
+| Logo mark (SVG / PNG) | [`assets/brand/mark.svg`](assets/brand/mark.svg), [`mark-512.png`](assets/brand/mark-512.png) |
+| Banner / social preview (2:1) | [`assets/brand/banner.png`](assets/brand/banner.png) |
+| Motion film (1080p MP4, GIF preview, stills) | [`assets/video/`](assets/video/) |
+| Storyboard | [`assets/video/STORYBOARD.md`](assets/video/STORYBOARD.md) |
+
+The mark is the benchmark's core idea: history runs up to the **forecast origin**
+(the yellow bar), then splits into the forecast (dotted, signal yellow) and
+reality (paper white). The film is deterministic SVG rendered frame by frame:
 
 ```bash
-uv run --extra dashboard python dashboard/app.py
-# -> http://localhost:7860
+uv run python scripts/export_story_data.py                     # numbers from committed results
+uv run --with playwright python scripts/render_motion.py all   # needs Chrome + ffmpeg
 ```
-
-Also deployed on Hugging Face Spaces (link added after publication).
 
 ## Repository layout
 
@@ -130,7 +192,8 @@ src/forecast_arena/
   models/           forecaster interface + adapters (baselines, GBMs, foundation)
   evaluation/       metrics, protocol, runner, analysis, simulation
   visualization/    publication charts
-dashboard/          Gradio app over cached results
+dashboard/          Gradio app over cached results (deployed as the HF Space)
+assets/             brand, motion film + storyboard, publication charts
 docs/adr/           accepted methodology decisions
 reports/            technical reports + LinkedIn drafts (English)
 ```

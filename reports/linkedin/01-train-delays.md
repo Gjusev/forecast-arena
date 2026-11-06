@@ -5,7 +5,7 @@
 I asked eight forecasting models to predict German train delays one hour
 ahead. A 209-million-parameter foundation model won.
 
-By 0.08 minutes.
+By 0.07 minutes.
 
 Here's what we found. Deutsche Bahn delay data is public — 5.7 million
 arrivals across Germany's five biggest stations, 2024–2026. We built a
@@ -29,7 +29,7 @@ Every serious model beats naive by 30–33%. Statistically bulletproof
 boosting? 0.06 minutes. About 4 seconds of average delay.
 
 And the cost side: TimesFM needed 3,400× more compute than naive for a
-0.08-minute edge over the best GBM.
+0.07-minute edge over the best GBM.
 
 The uncomfortable part: on Feb 5, 2026, Frankfurt's average delay spiked past
 60 minutes at midday. All eight models — foundation or not — predicted a flat

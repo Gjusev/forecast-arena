@@ -99,7 +99,7 @@ cost at actual auction prices. Scheduler = Chronos-2 (best MAE).
 | Oracle (perfect foresight) | 182.8 |
 
 - **Saving vs fixed midday: 40.2 €/day (−17.0%)**
-- **Regret vs oracle: 13.8 €/day — the model captures 74.6% of the
+- **Regret vs oracle: 13.8 €/day — the model captures 74.4% of the
   theoretically available saving**
 - Wholesale market costs only. This is *not* a household bill estimate:
   retail contracts, taxes, levies and grid fees change the economics

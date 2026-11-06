@@ -67,7 +67,7 @@ lag/calendar models, retrained per origin on data ≤ origin), seasonal naive
 
 Skill vs seasonal naive at h=1: **+30% to +33%** for every serious model —
 foundation models and gradient boosting alike. The spread between the best
-foundation model and the best GBM at h=1 is 0.08 minutes (~5 s of average
+foundation model and the best GBM at h=1 is 0.07 minutes (~4 s of average
 delay). At h=24 the four families converge within 0.05 min.
 
 On the secondary target (delayed arrivals per hour) the pattern repeats:
