@@ -32,9 +32,33 @@ see the methodology below.
 
 ## Headline results
 
-🚧 Benchmarks are executing now. Results land here (with charts) once the
-pilot and full runs complete, each traceable to a committed predictions file.
-No numbers are shown that a reader cannot reproduce.
+All numbers below come from committed prediction files — full technical
+reports: [train delays](reports/01-train-delays.md),
+[electricity](reports/02-electricity-prices.md).
+
+### Train delays (5 hub stations, 110 rolling origins, 2024–2026)
+
+MAE in minutes, 1 hour ahead, vs **seasonal naive 2.76**:
+
+| Model | MAE | Skill vs naive | 80%-interval coverage |
+|---|---|---|---|
+| Timestral 209M | **1.84** | +33.2% | 0.78 |
+| Timestral 28M | 1.87 | +32.4% | 0.77 |
+| Chronos-2 | 1.89 | +31.4% | 0.76 |
+| TimesFM 3.0 | 1.90 | +31.4% | 0.79 |
+| LightGBM | 1.92 | +30.7% | — |
+| XGBoost | 1.93 | +30.2% | — |
+
+**Reading:** every serious model beats naive by ~30% (p < 1e-8) — but
+foundation models and laptop-trained gradient boosting are separated by
+0.08 minutes. On the worst disruption day in the window (Frankfurt, 2026-02-05,
+60+ min average delay), *all* models forecast a flat 5–10 min day.
+
+### Electricity prices
+
+🚧 full-tier results computing now — this section fills from the verified
+assets when the run completes (same policy: no number without a predictions
+file behind it).
 
 ## Methodology (short version)
 
