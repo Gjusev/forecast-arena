@@ -79,10 +79,10 @@ function txt(parent, x, y, s, size, fill, cls = "", t = 99, a = -9, extra = {}) 
 }
 
 /* ---------------- timeline ---------------- */
-const CUTS = [0, 3.6, 10.4, 14.8, 21.0, 25.2, 29.6, 33.5];
+const CUTS = [0, 3.6, 10.4, 14.8, 21.0, 25.2, 30.4, 36.2, 40.6, 44.5];
 const WIPE = .6;
 const DURATION = CUTS[CUTS.length - 1];
-const SCENES = [title, trains, trainsBoard, power, powerBoard, money, endCard];
+const SCENES = [title, trains, trainsBoard, power, powerBoard, weatherBoard, renewScene, money, endCard];
 
 function barX(t, cut) { return lerp(-80, W + 80, eio(prog(t, cut - WIPE / 2, cut + WIPE / 2))); }
 
@@ -140,7 +140,7 @@ function title(g, u) {
   const head = el("text", { x: M - 10, "font-size": 300, class: "d" }, g);
   el("tspan", { y: 470 + r1.dy, fill: C.signal, opacity: r1.o }, head, "AI ");
   el("tspan", { y: 470 + r2.dy, fill: C.paper, opacity: r2.o }, head, "vs Reality");
-  txt(g, M, 572, "Eight forecasting models. Two real German systems. Every number published.", 44, C.paper, "", u, .8);
+  txt(g, M, 572, "Eight forecasting models. Four real German arenas. Every number published.", 44, C.paper, "", u, .8);
 }
 
 /* ---------------- 2. trains: the miss ---------------- */
@@ -261,6 +261,65 @@ function powerBoard(g, u) {
   el("text", { x: W - M, y: 880 + r2.dy, "font-size": 130, fill: C.ml, opacity: r2.o, class: "d", "text-anchor": "end" }, g, fmt(f1("xgboost")));
   txt(g, W - M - 330, 930, "Timestral 209M (AI)", 30, C.paper, "", u, 2.4, { "text-anchor": "end" });
   txt(g, W - M, 930, "XGBoost (classic)", 30, C.paper, "", u, 2.45, { "text-anchor": "end" });
+}
+
+/* ---------------- 6. weather board ---------------- */
+function weatherBoard(g, u) {
+  chrome(g, "Experiment 3 · 30 German city stations");
+  txt(g, M, 230, "A day ahead, boosting falls below 'yesterday'.", 84, C.paper, "d", u, .3);
+  txt(g, M, 292, "Temperature, 24 hours ahead. Skill vs simply repeating yesterday.", 38, C.paper, "", u, .45);
+  const rows = S.weather24.filter(r => ["timestral_209M", "chronos_2", "lightgbm", "xgboost", "seasonal_naive_24h"].includes(r.model));
+  const x0 = 620, span = 560, y0 = 380, rh = 100;
+  el("rect", { x: x0 - 2, y: y0 - 20, width: 4, height: 560, fill: C.dim, opacity: eo(prog(u, .4, .9)) }, g);
+  rows.forEach((r, k) => {
+    const p = eo(prog(u, .8 + k * .18, 1.7 + k * .18));
+    const v = r.skill, w = Math.abs(v) / 10 * span * p;
+    const y = y0 + k * rh;
+    const isNeg = v < 0, isNaive = r.model === "seasonal_naive_24h";
+    if (isNeg) {
+      el("rect", { x: x0 - w, y: y + 6, width: Math.max(2, w), height: rh - 34, fill: fam(r.model), opacity: p }, g);
+      el("text", { x: x0 - w + 18, y: y + 42, "font-size": 34, fill: C.ink, opacity: p }, g, LABEL[r.model]);
+      el("text", { x: x0 - w - 16, y: y + 42, "font-size": 36, fill: C.paper, "text-anchor": "end", opacity: p, class: "s" }, g, v.toFixed(1) + "%");
+    } else {
+      el("text", { x: x0 - 24, y: y + 40, "font-size": 36, fill: isNaive ? C.dim : C.paper, "text-anchor": "end", opacity: p }, g, LABEL[r.model]);
+      el("rect", { x: x0 + 2, y: y + 6, width: Math.max(2, isNaive ? 4 : w), height: rh - 34, fill: isNaive ? C.dim : fam(r.model), opacity: p }, g);
+      el("text", { x: x0 + 2 + (isNaive ? 4 : w) + 14, y: y + 42, "font-size": 36, fill: C.paper, opacity: p, class: "s" }, g, "+" + (v * p).toFixed(1) + "%");
+    }
+  });
+  const lbl = rise(u, 2.6, .6, 40);
+  el("text", { x: x0, y: y0 + 5 * rh + 58 + lbl.dy, "font-size": 28, fill: C.dim, opacity: lbl.o }, g, "longer bar = smaller miss than 'same hour yesterday' · left of the line = worse");
+  const r2 = rise(u, 3.0, .6, 50);
+  el("text", { x: W - M, y: 700 + r2.dy, "font-size": 110, fill: C.signal, opacity: r2.o, class: "d", "text-anchor": "end" }, g, "−7.7%");
+  txt(g, W - M, 768, "XGBoost, a day ahead: worse", 38, C.paper, "", u, 3.2, { "text-anchor": "end" });
+  txt(g, W - M, 816, "than doing nothing. AI holds +6.5%.", 38, C.paper, "", u, 3.3, { "text-anchor": "end" });
+}
+
+/* ---------------- 7. renewables ---------------- */
+function renewScene(g, u) {
+  chrome(g, "Experiment 4 · the whole German wind fleet");
+  txt(g, M, 230, "Yesterday said the wind dies. It didn't.", 84, C.paper, "d", u, .2);
+  txt(g, M, 292, "4 Feb 2023: reality ramps from 2.6 to 12.2 GW. Predicted the day before.", 38, C.paper, "", u, .4);
+  const x0 = M + 80, x1 = 1340, y0 = 960, y1 = 380;
+  const mx = 44000, sx = i => x0 + i * ((x1 - x0) / 23), sy = v => y0 - (v / mx) * (y0 - y1);
+  const fade = eo(prog(u, .4, 1));
+  axisY(g, x0, x1, [0, 20, 40], v => y0 - (v * 1000 / mx) * (y0 - y1), "", " GW", fade);
+  el("text", { x: x0, y: y0 + 48, "font-size": 26, fill: C.dim, opacity: fade }, g, "wind feed-in, GW · hours after the forecast →");
+  el("rect", { x: x0 - 10, y: y1 - 40, width: 10, height: (y0 - y1 + 40) * expo(prog(u, .5, 1)), fill: C.signal }, g);
+  el("path", { d: linePart(S.renew.pred.seasonal_naive_24h, sx, sy, eo(prog(u, .9, 2.1))), fill: "none", stroke: C.baseline, "stroke-width": 6, "stroke-linejoin": "round" }, g);
+  el("path", { d: linePart(S.renew.pred.timestral_209M, sx, sy, eo(prog(u, 1.3, 2.5))), fill: "none", stroke: C.foundation, "stroke-width": 6, "stroke-linejoin": "round" }, g);
+  el("path", { d: linePart(S.renew.actual, sx, sy, eo(prog(u, 2.2, 3.4))), fill: "none", stroke: C.paper, "stroke-width": 8, "stroke-linejoin": "round" }, g);
+  [["Seasonal naive", C.baseline], ["Timestral 209M (AI)", C.foundation], ["What really happened", C.paper]].forEach(([s2, c], k) => {
+    const r = rise(u, 1.6 + k * .1);
+    el("rect", { x: RX, y: 418 + k * 54 + r.dy, width: 28, height: 8, fill: c, opacity: r.o }, g);
+    el("text", { x: RX + 42, y: 430 + k * 54 + r.dy, "font-size": 30, fill: C.paper, opacity: r.o }, g, s2);
+  });
+  const s1 = S.renew.skills, r1 = rise(u, 3.5, .6, 50);
+  el("text", { x: RX, y: 640 + r1.dy, "font-size": 120, fill: C.signal, opacity: r1.o, class: "d" }, g, "+" + s1["1"].timestral_209M.toFixed(0) + "%");
+  txt(g, RX, 706, "closer than 'yesterday', 1 h ahead", 34, C.paper, "", u, 3.7);
+  const r2 = rise(u, 4.1, .6, 40);
+  el("text", { x: RX, y: 810 + r2.dy, "font-size": 56, fill: C.paper, opacity: r2.o, class: "d" }, g, "+" + s1["24"].timestral_209M.toFixed(0) + "%");
+  el("text", { x: RX + 150, y: 810 + r2.dy, "font-size": 56, fill: C.ml, opacity: r2.o, class: "d" }, g, "+" + s1["24"].xgboost.toFixed(0) + "%");
+  txt(g, RX, 862, "a day ahead: AI vs boosting", 34, C.paper, "", u, 4.3);
 }
 
 /* ---------------- 6. money ---------------- */

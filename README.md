@@ -8,7 +8,7 @@
   <a href="https://huggingface.co/spaces/Gjusev/forecast-arena"><b>Live demo</b></a> ·
   <a href="reports/01-train-delays.md">Train delays report</a> ·
   <a href="reports/02-electricity-prices.md">Electricity report</a> ·
-  <a href="assets/video/forecast-arena.mp4">Watch the 33-second film</a>
+  <a href="assets/video/forecast-arena.mp4">Watch the 45-second film</a>
 </p>
 
 <p align="center">
@@ -29,9 +29,9 @@ Germany runs on: **Deutsche Bahn train delays** and **day-ahead electricity pric
 
 <p align="center">
   <a href="assets/video/forecast-arena.mp4">
-    <img src="assets/video/preview.gif" alt="33-second motion summary: forecasts miss a 61-minute delay in Frankfurt, the train leaderboard is a dead heat, foundation models catch a negative-price Sunday and win on power prices, and forecast-based scheduling saves 40.2 euros a day" width="100%">
+    <img src="assets/video/preview.gif" alt="45-second motion summary: forecasts miss a 61-minute delay in Frankfurt, the train leaderboard is a dead heat, foundation models catch a negative-price Sunday and win on power prices, boosting falls below the naive rule a day ahead in weather, AI sees a wind ramp coming, and forecast-based scheduling saves 40.2 euros a day" width="100%">
   </a>
-  <br><sub>Click for the full-resolution MP4 (1080p, 33 s). Every number comes from <code>assets/video/story.json</code>, exported from the committed results.</sub>
+  <br><sub>Click for the full-resolution MP4 (1080p, 45 s). Every number comes from <code>assets/video/story.json</code>, exported from the committed results.</sub>
 </p>
 
 ## What we found
@@ -90,11 +90,29 @@ boosting (+31–33% vs +17–19%), and GBMs are nearly blind to negative-price h
 
 ### 5. Does it pay? On wholesale prices, yes
 
-<img src="assets/video/stills/05-money.png" alt="Scheduling 4 MWh a day on Chronos-2 forecasts costs 196.6 euros a day vs 236.7 for fixed midday hours, a saving of 40.2 euros a day and 74 percent of the perfect-foresight saving" width="100%">
+<img src="assets/video/stills/07-money.png" alt="Scheduling 4 MWh a day on Chronos-2 forecasts costs 196.6 euros a day vs 236.7 for fixed midday hours, a saving of 40.2 euros a day and 74 percent of the perfect-foresight saving" width="100%">
 
 Scheduling 4 MWh of flexible daily load on the best model's forecast saved
 **40.2 €/day (−17%)** vs a fixed midday schedule, capturing **74% of the
 perfect-foresight saving** (wholesale costs only, not household bills).
+
+### 6. Weather, 30 German cities: boosting falls below 'yesterday'
+
+<img src="assets/video/stills/05-weather-24h.png" alt="Weather 24 hours ahead: foundation models hold +6.5 percent vs repeating yesterday, XGBoost falls to -7.7 percent, worse than the naive rule" width="100%">
+
+Predicting temperature 24 hours ahead across 30 city stations, the four
+foundation models hold a real edge over repeating yesterday (+4.2% to +6.5%)
+while XGBoost falls **below the naive rule** (−7.7%). At 1 hour ahead
+everything beats naive by ~80% - the interesting signal is at the long horizon.
+
+### 7. Renewables: AI sees the wind ramp coming
+
+<img src="assets/video/stills/06-renewables.png" alt="4 Feb 2023: German wind feed-in ramps from 2.6 to 12.2 GW; seasonal naive expects 42 GW falling away, Timestral 209M tracks the ramp" width="100%">
+
+On 4 Feb 2023 the German wind fleet ramped from 2.6 to 12.2 GW while simply
+repeating yesterday expected 42 GW collapsing. Timestral 209M tracked the ramp.
+Across 307 daily origins the pretrained models hold **+11%** over repeating
+yesterday at a day ahead; classic boosting only **+5%**.
 
 Publication charts: [`assets/charts/`](assets/charts/) · full reports: [`reports/`](reports/).
 

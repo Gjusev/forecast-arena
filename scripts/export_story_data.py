@@ -67,6 +67,41 @@ def main() -> None:
     )
     sched = json.loads((E2 / "report_assets_full/scheduling.json").read_text())
 
+    # weather (03): skill vs naive at h=24 for the models the film shows
+    m3 = pl.read_parquet(Path("experiments/03-dwd-weather/results/metrics_full.parquet"))
+    weather24 = (
+        m3.filter((pl.col("target") == "air_temperature") & (pl.col("h") == 24))
+        .select("model", pl.col("skill_vs_baseline_pct").round(1).alias("skill"))
+        .sort("skill", descending=True)
+    )
+    # renewables (04): biggest AI-vs-naive gap day on wind_total + skills
+    m4 = pl.read_parquet(Path("experiments/04-renewables/results/metrics_full.parquet"))
+    p4 = pl.read_parquet(Path("experiments/04-renewables/results/predictions.parquet")).filter(
+        (pl.col("tier") == "full") & (pl.col("series_id") == "wind_total/DE-LU")
+    )
+    po = (
+        p4.filter(pl.col("y_true").is_finite())
+        .with_columns((pl.col("y_true") - pl.col("y_pred")).abs().alias("err"))
+        .group_by("origin_ts", "model")
+        .agg(pl.col("err").mean())
+    )
+    pivot = po.filter(pl.col("model").is_in(["seasonal_naive_24h", "timestral_209M"])).pivot(
+        on="model", values="err"
+    )
+    wind_day = pivot.with_columns(
+        (pl.col("seasonal_naive_24h") - pl.col("timestral_209M")).alias("gap")
+    ).sort("gap", descending=True)["origin_ts"][0]
+    renew_skills = {
+        h: {
+            r["model"]: r["skill_vs_baseline_pct"]
+            for r in m4.filter((pl.col("target") == "wind_total") & (pl.col("h") == h))
+            .filter(pl.col("model").is_in(["timestral_209M", "xgboost"]))
+            .select("model", pl.col("skill_vs_baseline_pct").round(1))
+            .to_dicts()
+        }
+        for h in (1, 24)
+    }
+
     story = {
         "delays": day_curves(p1, fk, worst) | {"station": "Frankfurt (Main) Hbf"},
         "prices": day_curves(p2, "day_ahead_price/DE-LU", neg_day),
@@ -77,10 +112,22 @@ def main() -> None:
             m1.filter((pl.col("target") == "avg_delay_min") & (pl.col("h") == 1))["n"][0]
         ),
         "neg_f1": neg_f1.select("model", pl.col("f1").round(2)).to_dicts(),
+        "weather24": weather24.to_dicts(),
+        "renew": day_curves(p4, "wind_total/DE-LU", wind_day)
+        | {"skills": renew_skills, "station": "whole German fleet"},
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(story, indent=1, default=str), encoding="utf-8")
-    print("->", OUT, "| delays origin", worst, "| neg day", neg_day)
+    print(
+        "->",
+        OUT,
+        "| delays origin",
+        worst,
+        "| neg day",
+        neg_day,
+        "| wind day",
+        wind_day,
+    )
 
 
 if __name__ == "__main__":

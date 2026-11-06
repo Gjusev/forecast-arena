@@ -710,7 +710,7 @@ def hero_html() -> str:
   <p class="lede">Do the new pretrained AI forecasting models predict the real world better
   than classic methods? We replayed nearly 2,000 forecasts of German train delays and
   electricity prices, giving every model exactly the same information. New here? Start with
-  the 33-second film below.</p>
+  the 45-second film below.</p>
   <div class="verdicts">
     <div class="v"><b>{gb_d["mae"] - fm_d["mae"]:.2f} min</b><strong>Trains: a tie</strong>
       <span>The best AI model ({label(fm_d["model"])}) misses by {fm_d["mae"]:.2f} min on
@@ -732,7 +732,7 @@ def video_html() -> str:
     poster_attr = f' poster="{url(poster)}"' if poster.exists() else ""
     return (
         f'<video src="{url(VIDEO)}"{poster_attr} autoplay muted loop playsinline controls '
-        'aria-label="33-second film summarising the results" '
+        'aria-label="45-second film summarising the results" '
         'style="width:100%;display:block;background:#0b0b0b"></video>'
     )
 

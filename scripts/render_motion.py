@@ -26,7 +26,9 @@ STILLS = {  # name -> second; the resting frame at the end of each scene
     "02-trains-board": 14.4,
     "03-power-catch": 20.6,
     "04-power-board": 24.8,
-    "05-money": 29.2,
+    "05-weather-24h": 30.0,
+    "06-renewables": 35.8,
+    "07-money": 40.2,
 }
 
 
