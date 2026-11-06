@@ -15,6 +15,7 @@ dependencies = [
     "pyyaml>=6",
     "huggingface-hub>=0.25",
     "tqdm>=4.66",
+    "tabulate>=0.10.0",
 ]
 
 [project.optional-dependencies]
