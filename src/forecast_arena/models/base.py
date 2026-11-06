@@ -61,8 +61,8 @@ class Forecaster(ABC):
     family: str = "baseline"  # 'foundation' | 'ml' | 'baseline'
     supports_quantiles: bool = False
 
-    def prepare(self, histories: dict[str, np.ndarray], origin_index: int) -> None:
-        """Optional per-origin preparation (fit). Histories end at the origin."""
+    def prepare(self, histories: dict[str, np.ndarray], origin_index: int) -> None:  # noqa: B027
+        """Optionally prepare (fit) per origin; histories end at the origin."""
 
     @abstractmethod
     def forecast(

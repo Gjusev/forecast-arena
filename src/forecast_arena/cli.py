@@ -26,9 +26,7 @@ def main(argv: list[str] | None = None) -> int:
     p_run = sub.add_parser("run", help="run a benchmark tier")
     p_run.add_argument("exp", choices=sorted(EXPERIMENTS))
     p_run.add_argument("--tier", required=True, choices=["smoke", "pilot", "full"])
-    p_run.add_argument(
-        "--models", nargs="*", default=None, help="override config model list"
-    )
+    p_run.add_argument("--models", nargs="*", default=None, help="override config model list")
 
     p_sum = sub.add_parser("summarize", help="recompute metrics from stored predictions")
     p_sum.add_argument("exp", choices=sorted(EXPERIMENTS))
@@ -42,14 +40,13 @@ def main(argv: list[str] | None = None) -> int:
     cfg_path = base / "config.yaml"
 
     if args.cmd == "build-data":
+        from forecast_arena.config import load_config
         from forecast_arena.data.db_delays import build_hourly_aggregates
         from forecast_arena.data.electricity import build_price_panel
-        from forecast_arena.config import load_config
 
         cfg = load_config(cfg_path)
         if cfg["experiment"] == "train-delays":
             import glob
-            import os
 
             raw = args.raw_dir or cfg["data"]["raw_dir"]
             # resolve HF cache if raw dir holds a snapshot pointer
@@ -63,9 +60,7 @@ def main(argv: list[str] | None = None) -> int:
                     max_workers=4,
                 )
                 raw = snap
-            out = build_hourly_aggregates(
-                Path(raw), Path(cfg["data"]["aggregates"])
-            )
+            out = build_hourly_aggregates(Path(raw), Path(cfg["data"]["aggregates"]))
             log.info("aggregates -> %s", out)
         else:
             out = build_price_panel(Path(cfg["data"]["prices"]), refresh=False)
@@ -85,15 +80,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.cmd == "summarize":
+        import polars as pl
+
         from forecast_arena.config import load_config
         from forecast_arena.evaluation.runner import summarize
-        import polars as pl
 
         cfg = load_config(cfg_path)
         out_dir = Path(cfg.get("results_dir", base / "results"))
-        preds = pl.read_parquet(out_dir / "predictions.parquet").filter(
-            pl.col("tier") == args.tier
-        )
+        preds = pl.read_parquet(out_dir / "predictions.parquet").filter(pl.col("tier") == args.tier)
         summary = summarize(
             preds,
             cfg.get("protocol", {}).get("eval_horizons", [1, 3, 6, 24]),

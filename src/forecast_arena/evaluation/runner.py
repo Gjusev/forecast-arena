@@ -24,8 +24,20 @@ from forecast_arena.models.base import Forecaster, KnownFuture
 log = logging.getLogger(__name__)
 
 PRED_COLS = [
-    "experiment", "tier", "model", "series_id", "origin_ts", "h",
-    "y_true", "y_pred", "q05", "q10", "q25", "q75", "q90", "q95",
+    "experiment",
+    "tier",
+    "model",
+    "series_id",
+    "origin_ts",
+    "h",
+    "y_true",
+    "y_pred",
+    "q05",
+    "q10",
+    "q25",
+    "q75",
+    "q90",
+    "q95",
 ]
 
 
@@ -99,19 +111,24 @@ def run_benchmark(
         old = pl.read_parquet(pred_path)
         done = {
             (m, o)
-            for m, o in zip(
-                old["model"].to_list(), old["origin_ts"].to_list()
-            )
+            for m, o in zip(old["model"].to_list(), old["origin_ts"].to_list(), strict=False)
             if old["tier"][0] == tier
         }
         # simpler & safe: recompute done set with filter
         old_f = old.filter(pl.col("tier") == tier)
-        done = set(zip(old_f["model"].to_list(), old_f["origin_ts"].to_list()))
+        done = set(zip(old_f["model"].to_list(), old_f["origin_ts"].to_list(), strict=False))
 
     per_model_seconds: dict[str, float] = {}
     rows: list[dict] = []
     origins = spec.origins()
-    log.info("[%s/%s] %d origins, %d models, %d series", experiment, tier, len(origins), len(models), len(spec.series))
+    log.info(
+        "[%s/%s] %d origins, %d models, %d series",
+        experiment,
+        tier,
+        len(origins),
+        len(models),
+        len(spec.series),
+    )
 
     if grid_how is not None:
         for m in models:
@@ -225,8 +242,11 @@ def summarize(
     baseline_model: str,
     event_thresholds: dict[str, float] | None = None,
 ) -> pl.DataFrame:
-    """Metrics per (model, target, h). Series of one target share units and
-    pool together; different targets never mix."""
+    """Metrics per (model, target, h).
+
+    Series of one target share units and pool together; different targets
+    never mix.
+    """
     pdf = preds.to_pandas()
     pdf["target"] = pdf.series_id.str.split("/").str[0]
     out = []
@@ -237,8 +257,9 @@ def summarize(
         y = g["y_true"].to_numpy(float)
         p = g["y_pred"].to_numpy(float)
         bl = baseline[(baseline.h == h) & (baseline.target == target)]
-        bl_by = {(sid, o): v for sid, o, v in zip(bl.series_id, bl.origin_ts, bl.y_pred)}
-        keys = list(zip(g.series_id, g.origin_ts))
+        pairs = list(zip(bl.series_id, bl.origin_ts, strict=True))
+        bl_by = dict(zip(pairs, bl.y_pred, strict=True))
+        keys = list(zip(g.series_id, g.origin_ts, strict=False))
         if all(k in bl_by for k in keys) and len(bl_by) > 0:
             bl_pred = np.array([bl_by[k] for k in keys])
             skill = float(100 * (1 - M.mae(y, p) / M.mae(y, bl_pred)))

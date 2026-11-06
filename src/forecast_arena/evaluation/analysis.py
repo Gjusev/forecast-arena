@@ -15,9 +15,7 @@ def _to_np(g: pl.DataFrame, col: str) -> np.ndarray:
     return g[col].to_numpy().astype(float)
 
 
-def per_series_metrics(
-    preds: pl.DataFrame, eval_horizons: list[int]
-) -> pl.DataFrame:
+def per_series_metrics(preds: pl.DataFrame, eval_horizons: list[int]) -> pl.DataFrame:
     """MAE/RMSE per (model, series_id, h) for detailed station-level tables."""
     pdf = preds.to_pandas()
     out = []
@@ -56,12 +54,12 @@ def dm_vs_baseline(
         bl = pdf[(pdf.model == baseline) & (pdf.h == h)]
         if bl.empty:
             continue
-        bl_map = {(s, o): p for s, o, p in zip(bl.series_id, bl.origin_ts, bl.y_pred)}
+        bl_map = {(s, o): p for s, o, p in zip(bl.series_id, bl.origin_ts, bl.y_pred, strict=True)}
         for model in pdf.model.unique():
             g = pdf[(pdf.model == model) & (pdf.h == h)]
             if g.empty or model == baseline:
                 continue
-            keys = [(s, o) for s, o in zip(g.series_id, g.origin_ts)]
+            keys = [(s, o) for s, o in zip(g.series_id, g.origin_ts, strict=True)]
             if not all(k in bl_map for k in keys):
                 continue
             y = g.y_true.to_numpy(float)

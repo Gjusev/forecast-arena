@@ -10,8 +10,8 @@ from forecast_arena.evaluation.protocol import (
     freeze_thresholds_on_train,
     truncate_at,
 )
-from forecast_arena.models.baselines import HourOfWeekClimatology, SeasonalNaive
 from forecast_arena.models.base import KnownFuture
+from forecast_arena.models.baselines import HourOfWeekClimatology, SeasonalNaive
 from forecast_arena.models.gbms import LightGBMModel, build_training_matrix
 
 
@@ -51,7 +51,7 @@ class TestMetrics:
 
     def test_dm_test_perfect_forecast(self):
         rng = np.random.default_rng(1)
-        y = rng.normal(size=500)
+        rng.normal(size=500)
         e1 = np.zeros(500)  # perfect
         e2 = np.abs(rng.normal(size=500))  # competitor errors
         stat, p = M.diebold_mariano(e1, e2)
@@ -79,9 +79,7 @@ class TestProtocol:
             assert_no_lookahead(spec, origin=20, pred_len=24)  # below min_train
 
     def test_origins_step(self):
-        spec = PanelSpec(
-            series={"a": np.zeros(200)}, horizon=24, origin_step=50, min_train=30
-        )
+        spec = PanelSpec(series={"a": np.zeros(200)}, horizon=24, origin_step=50, min_train=30)
         o = spec.origins()
         assert o[0] == 30 and 80 in o and o[-1] <= 176
 
@@ -148,7 +146,8 @@ class TestGBM:
         m.set_calendar(np.arange(len(h)) % 168)
         cut = len(h) - 24
         m.prepare({"s": h[:cut]}, cut)
-        known = KnownFuture(columns=["hour_of_week"], values=(np.arange(cut, cut + 24) % 168).reshape(-1, 1))
+        vals = (np.arange(cut, cut + 24) % 168).reshape(-1, 1)
+        known = KnownFuture(columns=["hour_of_week"], values=vals)
         pred = m.forecast(h[:cut], 24, known_future=known, series_id="s")
         # next day of the same sine: should beat a 2.0 MAE bar
         truth = h[-24:]

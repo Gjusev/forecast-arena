@@ -28,9 +28,7 @@ for r in con.execute(f"""
     print(f"  {r[0]}  {r[1]!r}  {r[2]:,}")
 
 print("\n=== main file: one row per id? ===")
-r = con.execute(
-    f"SELECT count(*), count(DISTINCT id) FROM read_parquet('{u_main}')"
-).fetchone()
+r = con.execute(f"SELECT count(*), count(DISTINCT id) FROM read_parquet('{u_main}')").fetchone()
 print(f"  main rows={r[0]:,} distinct ids={r[1]:,}")
 r = con.execute(
     f"""SELECT count(DISTINCT snapshot_timestamp) FROM read_parquet('{u_main}')"""

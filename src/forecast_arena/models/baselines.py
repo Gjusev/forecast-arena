@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from forecast_arena.models.base import ForecastResult, Forecaster
+from forecast_arena.models.base import Forecaster, ForecastResult
 
 
 class SeasonalNaive(Forecaster):
@@ -46,9 +46,9 @@ class HourOfWeekClimatology(Forecaster):
         hist = np.asarray(history, dtype=float)
         n = len(hist)
         if known_future is not None and "hour_of_week" in known_future.columns:
-            how_target = known_future.values[
-                :, known_future.columns.index("hour_of_week")
-            ].astype(int)
+            how_target = known_future.values[:, known_future.columns.index("hour_of_week")].astype(
+                int
+            )
             # Last history slot sits one step before target step 1.
             hist_end_how = int(how_target[0]) - 1
             idx = (hist_end_how - np.arange(n)) % 168

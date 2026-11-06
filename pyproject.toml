@@ -53,10 +53,13 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "D"]
-ignore = ["D203", "D213"]
+# D1xx (missing docstring) relaxed: public APIs carry docstrings, helpers do not
+ignore = ["D203", "D213", "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D"]
+"tests/*" = ["D", "E402"]
+"scripts/*" = ["D"]
+"dashboard/*" = ["D"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

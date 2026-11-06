@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from forecast_arena.models.base import ForecastResult, Forecaster
+from forecast_arena.models.base import Forecaster, ForecastResult
 
 LAGS = [1, 2, 3, 24, 48, 72, 168, 336]
 WINDOWS = [24, 168]
@@ -93,9 +93,7 @@ class _GBMBase(Forecaster):
             t = len(buf)
             if known_future is not None and "hour_of_week" in known_future.columns:
                 # Authoritative: the target slot's own calendar entry.
-                how_t = int(
-                    known_future.values[step, known_future.columns.index("hour_of_week")]
-                )
+                how_t = int(known_future.values[step, known_future.columns.index("hour_of_week")])
             elif t < len(self._how):
                 # Fallback: valid only when history was not truncated.
                 how_t = int(self._how[t])

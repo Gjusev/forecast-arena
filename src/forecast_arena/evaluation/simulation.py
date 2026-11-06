@@ -67,7 +67,8 @@ def run_simulation(preds: pl.DataFrame, model: str) -> pl.DataFrame:
         # 'yesterday' = the previous origin's actual day (origin_step=24h)
         prev = origins[i - 1] if i > 0 else None
         yday = by_origin[prev].y_true.to_numpy(float) if prev else None
-        costs = simulate_day(actual, pred, yday if yday is not None and len(yday) == len(actual) else None)
+        prev_ok = yday is not None and len(yday) == len(actual)
+        costs = simulate_day(actual, pred, yday if prev_ok else None)
         base = costs["fixed_midday"]
         rows.append(
             {

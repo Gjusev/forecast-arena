@@ -47,9 +47,7 @@ def mase(y_true: np.ndarray, y_pred: np.ndarray, baseline_mae: float) -> float:
     return mae(y_true, y_pred) / baseline_mae
 
 
-def interval_coverage(
-    y_true: np.ndarray, lower: np.ndarray, upper: np.ndarray
-) -> float:
+def interval_coverage(y_true: np.ndarray, lower: np.ndarray, upper: np.ndarray) -> float:
     m = np.isfinite(y_true) & np.isfinite(lower) & np.isfinite(upper)
     if not m.any():
         return float("nan")
@@ -77,9 +75,9 @@ def diebold_mariano(
     lag = min(h, n // 5)
     gamma0 = np.mean(dc**2)
     var = gamma0
-    for l in range(1, lag + 1):
-        w = 1 - l / (lag + 1)
-        var += 2 * w * np.mean(dc[l:] * dc[:-l])
+    for k in range(1, lag + 1):
+        w = 1 - k / (lag + 1)
+        var += 2 * w * np.mean(dc[k:] * dc[:-k])
     if var <= 0:
         return float("nan"), float("nan")
     stat = dbar / np.sqrt(var / n)
@@ -87,9 +85,7 @@ def diebold_mariano(
     return float(stat), float(p)
 
 
-def event_detection(
-    y_true: np.ndarray, y_pred: np.ndarray, threshold: float
-) -> dict[str, float]:
+def event_detection(y_true: np.ndarray, y_pred: np.ndarray, threshold: float) -> dict[str, float]:
     """Precision/recall/F1 for binary event = value >= threshold.
 
     For negative events callers pass a negated series and threshold 0

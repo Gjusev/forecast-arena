@@ -48,8 +48,10 @@ for r in con.execute(f"""
         count(*) AS n,
         avg(date_diff('second', arrival_planned_time, arrival_change_time)/60.0) AS avg_delay,
         median(date_diff('second', arrival_planned_time, arrival_change_time)/60.0) AS med,
-        quantile_cont(date_diff('second', arrival_planned_time, arrival_change_time)/60.0, 0.9) AS p90,
-        quantile_cont(date_diff('second', arrival_planned_time, arrival_change_time)/60.0, 0.99) AS p99
+        quantile_cont(date_diff('second', arrival_planned_time, arrival_change_time)/60.0,
+                      0.9) AS p90,
+        quantile_cont(date_diff('second', arrival_planned_time, arrival_change_time)/60.0,
+                      0.99) AS p99
     FROM read_parquet('{u_main}')
     WHERE eva IN ('08000105','08098105')
       AND arrival_planned_time IS NOT NULL AND arrival_change_time IS NOT NULL

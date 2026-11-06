@@ -70,9 +70,7 @@ def _panel_for(cfg: dict) -> tuple[list, np.ndarray, dict[str, np.ndarray]]:
     raise ValueError(f"unknown experiment {exp!r}")
 
 
-def run_experiment(
-    config_path: Path, tier: str, models_override: list[str] | None = None
-) -> Path:
+def run_experiment(config_path: Path, tier: str, models_override: list[str] | None = None) -> Path:
     cfg = load_config(config_path)
     ts = tier_settings(cfg, tier)
     grid, grid_how, series = _panel_for(cfg)
@@ -100,17 +98,20 @@ def run_experiment(
         q = float(cfg["events"].get("train_quantile", 0.9))
         thresholds = freeze_thresholds_on_train(series, spec.min_train, q)
 
-    model_names = (
-        models_override or ts.get("models") or cfg.get("models", ["seasonal_naive_24h"])
-    )
+    model_names = models_override or ts.get("models") or cfg.get("models", ["seasonal_naive_24h"])
     models = build_models(model_names)
     out_dir = Path(cfg.get("results_dir", config_path.parent / "results"))
     origin_dt = {o: str(grid[o]) for o in spec.origins()}
 
     provenance.write_provenance(out_dir, cfg["experiment"], tier, cfg)
     preds = run_benchmark(
-        cfg["experiment"], tier, spec, models, out_dir,
-        origin_datetimes=origin_dt, grid_how=grid_how,
+        cfg["experiment"],
+        tier,
+        spec,
+        models,
+        out_dir,
+        origin_datetimes=origin_dt,
+        grid_how=grid_how,
     )
     preds = preds.filter(pl.col("tier") == tier)
     baseline = cfg.get("baseline_model", "seasonal_naive_24h")

@@ -12,7 +12,7 @@ from importlib.util import find_spec
 
 import numpy as np
 
-from forecast_arena.models.base import ForecastResult, Forecaster
+from forecast_arena.models.base import Forecaster, ForecastResult
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +50,10 @@ class TimestralForecasterAdapter(Forecaster):
         m = self._load()
         ctx = np.asarray(history, dtype=np.float32).reshape(1, 1, -1)
         out = m.forecast(ctx, prediction_length=horizon)
-        to_np = lambda t: np.asarray(t.detach().cpu() if hasattr(t, "detach") else t, dtype=float)
+
+        def to_np(t):
+            return np.asarray(t.detach().cpu() if hasattr(t, "detach") else t, dtype=float)
+
         q = to_np(out.quantiles)[0, 0]  # (H, Q)
         levels = np.asarray(out.quantile_levels, dtype=float)
         median = to_np(out.median)[0, 0]
@@ -128,9 +131,7 @@ class TimesFMAdapter(Forecaster):
 
     def forecast(self, history, horizon, known_future=None, series_id: str = ""):
         m = self._load()
-        out = m.predict(
-            np.asarray(history, dtype=np.float32), horizon, return_quantiles=True
-        )
+        out = m.predict(np.asarray(history, dtype=np.float32), horizon, return_quantiles=True)
         levels = np.asarray(list(m.model.quantiles), dtype=float)
         point = np.asarray(out.forecast, dtype=float)
         if out.quantiles is not None:

@@ -41,9 +41,7 @@ def assert_no_lookahead(panel: PanelSpec, origin: int, pred_len: int) -> None:
         raise ValueError(f"origin {origin} < min_train {panel.min_train}")
 
 
-def train_test_split(
-    series: np.ndarray, split_index: int
-) -> tuple[np.ndarray, np.ndarray]:
+def train_test_split(series: np.ndarray, split_index: int) -> tuple[np.ndarray, np.ndarray]:
     """Chronological split: series[:split_index] train, series[split_index:] test."""
     return series[:split_index], series[split_index:]
 

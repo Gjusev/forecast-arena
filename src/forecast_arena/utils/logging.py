@@ -24,8 +24,6 @@ class JsonFormatter(logging.Formatter):
 def setup_logging(level: int = logging.INFO) -> None:
     root = logging.getLogger()
     root.setLevel(level)
-    if not any(isinstance(h, logging.StreamHandler) and h.stream is sys.stderr for h in root.handlers):
-        pass  # keep existing handlers if any
     handler = logging.StreamHandler(sys.stderr)
     handler.setFormatter(JsonFormatter())
     root.handlers = [handler]

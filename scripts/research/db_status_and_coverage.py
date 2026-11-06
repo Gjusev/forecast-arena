@@ -10,7 +10,8 @@ u = f"{BASE}/monthly_processed_data_change/data-2024-10.parquet"
 print("=== BERLIN stations ===")
 for r in con.execute(f"""
     SELECT eva, station_name, count(*) FROM read_parquet('{u}')
-    WHERE station_name ILIKE 'berlin%' AND (station_name ILIKE '%bf%' OR station_name ILIKE 'Hauptbahnhof%')
+    WHERE station_name ILIKE 'berlin%'
+      AND (station_name ILIKE '%bf%' OR station_name ILIKE 'Hauptbahnhof%')
     GROUP BY eva, station_name ORDER BY count(*) DESC LIMIT 8
 """).fetchall():
     print(f"  {r[0]}  {r[1]:40s} {r[2]:,}")
