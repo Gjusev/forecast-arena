@@ -265,7 +265,10 @@ def summarize(
         keys = list(zip(g.series_id, g.origin_ts, strict=False))
         if all(k in bl_by for k in keys) and len(bl_by) > 0:
             bl_pred = np.array([bl_by[k] for k in keys])
-            skill = float(100 * (1 - M.mae(y, p) / M.mae(y, bl_pred)))
+            bl_mae = M.mae(y, bl_pred)
+            # a perfect baseline (e.g. solar night hours: truth 0, lag-24 = 0)
+            # makes skill undefined - guard instead of dividing by zero
+            skill = float(100 * (1 - M.mae(y, p) / bl_mae)) if bl_mae > 0 else float("nan")
         else:
             skill = float("nan")
         row = {

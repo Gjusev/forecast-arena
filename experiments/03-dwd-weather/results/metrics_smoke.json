@@ -1,0 +1,7 @@
+{
+  "thresholds": {
+    "air_temperature/00433": 22.3,
+    "air_temperature/00662": 20.9
+  },
+  "baseline": "seasonal_naive_24h"
+}

@@ -67,6 +67,16 @@ def _panel_for(cfg: dict) -> tuple[list, np.ndarray, dict[str, np.ndarray]]:
         return build_electricity_panel(
             Path(data["prices"]), start=data.get("start"), end=data.get("end")
         )
+    if exp == "dwd_weather":
+        from forecast_arena.data.dwd import build_dwd_panel
+
+        return build_dwd_panel(Path(data["hourly"]), start=data.get("start"), end=data.get("end"))
+    if exp == "renewables":
+        from forecast_arena.data.energy_charts import build_renewables_panel
+
+        return build_renewables_panel(
+            Path(data["hourly"]), start=data.get("start"), end=data.get("end")
+        )
     raise ValueError(f"unknown experiment {exp!r}")
 
 

@@ -1,0 +1,26 @@
+{
+  "experiment": "renewables",
+  "tier": "smoke",
+  "n_series": 2,
+  "horizon": 24,
+  "origins": [
+    68712,
+    68736,
+    68760
+  ],
+  "models": [
+    "seasonal_naive_24h",
+    "lightgbm",
+    "chronos_2"
+  ],
+  "python": "3.12.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "started": "2026-11-06T18:03:49",
+  "finished": "2026-11-06T18:03:49",
+  "wall_seconds": null,
+  "per_model_seconds": {
+    "seasonal_naive_24h": 0.0004408999993756879,
+    "lightgbm": 1.7248648999993748,
+    "chronos_2": 8.30863859999954
+  }
+}

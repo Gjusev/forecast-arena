@@ -123,6 +123,12 @@ uv run --extra dashboard python dashboard/app.py   # -> http://localhost:7860
 |---|---|---|---|
 | 1 | [Train delays](experiments/01-train-delays/) | Can Timestral-209M predict Deutsche Bahn disruption levels hours ahead? | 5 major stations, 2024-07 → 2026-10, ~5.7M arrivals |
 | 2 | [Electricity prices](experiments/02-electricity-prices/) | Can small foundation models predict negative prices and spikes in the German day-ahead market? | DE-LU hourly day-ahead prices, 2018-10 → today |
+| 3 | [DWD weather](experiments/03-dwd-weather/) | Do pretrained models beat simple baselines on the daily weather cycle, and do they catch heat hours? | 30 German city stations, hourly 2m temperature, 2015 → today |
+| 4 | [Renewables](experiments/04-renewables/) | Can models forecast tomorrow's wind and solar feed-in? | DE-LU wind onshore/offshore + solar, hourly, 2019 → today |
+
+*Collecting:* river gauges (PEGELONLINE, 738 stations) are accumulating history via
+`scripts/collect_pegelonline.py` for a future water-level experiment — the public API
+only serves 31 days, so collection started 2026-11-06. See [docs/dataset-research.md](docs/dataset-research.md).
 
 ## Models
 

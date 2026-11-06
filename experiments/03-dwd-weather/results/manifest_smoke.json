@@ -1,0 +1,26 @@
+{
+  "experiment": "dwd_weather",
+  "tier": "smoke",
+  "n_series": 2,
+  "horizon": 24,
+  "origins": [
+    103752,
+    103776,
+    103800
+  ],
+  "models": [
+    "seasonal_naive_24h",
+    "lightgbm",
+    "chronos_2"
+  ],
+  "python": "3.12.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "started": "2026-11-06T18:06:03",
+  "finished": "2026-11-06T18:06:03",
+  "wall_seconds": null,
+  "per_model_seconds": {
+    "seasonal_naive_24h": 0.00047540000014123507,
+    "lightgbm": 2.6017847000002803,
+    "chronos_2": 5.202824799991504
+  }
+}

@@ -12,6 +12,8 @@ from forecast_arena.utils.logging import setup_logging
 EXPERIMENTS = {
     "01": Path("experiments/01-train-delays"),
     "02": Path("experiments/02-electricity-prices"),
+    "03": Path("experiments/03-dwd-weather"),
+    "04": Path("experiments/04-renewables"),
 }
 
 
@@ -62,6 +64,16 @@ def main(argv: list[str] | None = None) -> int:
                 raw = snap
             out = build_hourly_aggregates(Path(raw), Path(cfg["data"]["aggregates"]))
             log.info("aggregates -> %s", out)
+        elif cfg["experiment"] == "dwd_weather":
+            from forecast_arena.data.dwd import refresh_raw
+
+            out = refresh_raw(Path(args.raw_dir or cfg["data"]["raw_dir"]))
+            log.info("dwd hourly cache -> %s", out)
+        elif cfg["experiment"] == "renewables":
+            from forecast_arena.data.energy_charts import refresh_raw
+
+            out = refresh_raw(Path(args.raw_dir or cfg["data"]["raw_dir"]))
+            log.info("renewables hourly cache -> %s", out)
         else:
             out = build_price_panel(Path(cfg["data"]["prices"]), refresh=False)
             log.info(
