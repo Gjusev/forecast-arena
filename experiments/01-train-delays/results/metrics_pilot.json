@@ -1,0 +1,15 @@
+{
+  "thresholds": {
+    "avg_delay_min/Berlin Hbf": 7.938775510204081,
+    "avg_delay_min/Frankfurt(Main)Hbf": 9.541666666666666,
+    "avg_delay_min/Hamburg Hbf": 7.2686299615877115,
+    "avg_delay_min/K\u00f6ln Hbf": 12.234666313559329,
+    "avg_delay_min/M\u00fcnchen Hbf": 9.979782608695649,
+    "n_delayed_gt5/Berlin Hbf": 18.0,
+    "n_delayed_gt5/Frankfurt(Main)Hbf": 31.0,
+    "n_delayed_gt5/Hamburg Hbf": 26.0,
+    "n_delayed_gt5/K\u00f6ln Hbf": 28.0,
+    "n_delayed_gt5/M\u00fcnchen Hbf": 37.0
+  },
+  "baseline": "seasonal_naive_24h"
+}

@@ -1,0 +1,26 @@
+{
+  "experiment": "electricity",
+  "tier": "smoke",
+  "n_series": 1,
+  "horizon": 24,
+  "origins": [
+    51240,
+    51264,
+    51288
+  ],
+  "models": [
+    "seasonal_naive_24h",
+    "lightgbm",
+    "chronos_2"
+  ],
+  "python": "3.12.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "started": "2026-11-06T14:04:30",
+  "finished": "2026-11-06T14:04:30",
+  "wall_seconds": null,
+  "per_model_seconds": {
+    "seasonal_naive_24h": 0.0005663000047206879,
+    "lightgbm": 2.8732597999987775,
+    "chronos_2": 5.241542499989009
+  }
+}

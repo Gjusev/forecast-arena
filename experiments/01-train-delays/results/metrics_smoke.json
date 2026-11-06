@@ -1,0 +1,6 @@
+{
+  "thresholds": {
+    "avg_delay_min/Berlin Hbf": 7.929577464788732
+  },
+  "baseline": "seasonal_naive_24h"
+}

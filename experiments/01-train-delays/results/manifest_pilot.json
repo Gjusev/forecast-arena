@@ -1,0 +1,41 @@
+{
+  "experiment": "train-delays",
+  "tier": "pilot",
+  "n_series": 10,
+  "horizon": 24,
+  "origins": [
+    19194,
+    19361,
+    19528,
+    19695,
+    19862,
+    20029,
+    20196,
+    20363
+  ],
+  "models": [
+    "seasonal_naive_24h",
+    "hour_of_week_climatology",
+    "lightgbm",
+    "xgboost",
+    "timestral_28M",
+    "timestral_209M",
+    "chronos_2",
+    "timesfm_3_0"
+  ],
+  "python": "3.12.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "started": "2026-11-06T14:03:55",
+  "finished": "2026-11-06T14:03:55",
+  "wall_seconds": null,
+  "per_model_seconds": {
+    "seasonal_naive_24h": 0.0036684999759017956,
+    "hour_of_week_climatology": 0.0017810000281315297,
+    "lightgbm": 17.19147060000614,
+    "xgboost": 19.86067539999567,
+    "timestral_28M": 2.8386073000183387,
+    "timestral_209M": 12.273784499997419,
+    "chronos_2": 8.44959679999738,
+    "timesfm_3_0": 24.893843899975764
+  }
+}

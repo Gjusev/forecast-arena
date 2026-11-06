@@ -1,0 +1,41 @@
+{
+  "experiment": "electricity",
+  "tier": "pilot",
+  "n_series": 1,
+  "horizon": 24,
+  "origins": [
+    51120,
+    51144,
+    51168,
+    51192,
+    51216,
+    51240,
+    51264,
+    51288
+  ],
+  "models": [
+    "seasonal_naive_24h",
+    "hour_of_week_climatology",
+    "lightgbm",
+    "xgboost",
+    "timestral_28M",
+    "timestral_209M",
+    "chronos_2",
+    "timesfm_3_0"
+  ],
+  "python": "3.12.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "started": "2026-11-06T14:05:59",
+  "finished": "2026-11-06T14:05:59",
+  "wall_seconds": null,
+  "per_model_seconds": {
+    "seasonal_naive_24h": 0.0009224999994330574,
+    "hour_of_week_climatology": 0.00050149999151472,
+    "lightgbm": 1.8480554999987362,
+    "xgboost": 3.1019702999947185,
+    "timestral_28M": 0.9290796000022965,
+    "timestral_209M": 2.6997727999987546,
+    "chronos_2": 5.537376499996753,
+    "timesfm_3_0": 4.480752499992377
+  }
+}

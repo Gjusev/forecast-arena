@@ -1,0 +1,25 @@
+{
+  "experiment": "train-delays",
+  "tier": "smoke",
+  "n_series": 1,
+  "horizon": 24,
+  "origins": [
+    20136,
+    20304
+  ],
+  "models": [
+    "seasonal_naive_24h",
+    "lightgbm",
+    "timestral_209M"
+  ],
+  "python": "3.12.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "started": "2026-11-06T13:50:05",
+  "finished": "2026-11-06T13:50:05",
+  "wall_seconds": null,
+  "per_model_seconds": {
+    "seasonal_naive_24h": 0.000210000000151922,
+    "lightgbm": 0.7950250000012602,
+    "timestral_209M": 1.5353087999992567
+  }
+}
