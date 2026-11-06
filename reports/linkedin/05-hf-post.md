@@ -8,7 +8,7 @@ the film autoplays in the Space's Start-here tab).
 We ran almost 2,000 forecasts on real German data to see whether the new AI
 forecasting models are actually better.
 
-Timestral, Chronos-2, TimesFM vs LightGBM, XGBoost and two simple baselines.
+Timestral, Chronos-2, TimesFM vs LightGBM, XGBoost and two simple baselines - on train delays, electricity prices, weather stations and wind + solar generation.
 Every model saw the same data and could not peek at the future. Everything ran
 on a CPU.
 

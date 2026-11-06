@@ -1,0 +1,9 @@
+{
+  "thresholds": {
+    "wind_onshore/DE-LU": 38535.578750000015,
+    "wind_total/DE-LU": 43138.95500000001,
+    "solar/DE-LU": 40813.24250000001,
+    "wind_offshore/DE-LU": 6975.9850000000015
+  },
+  "baseline": "seasonal_naive_24h"
+}

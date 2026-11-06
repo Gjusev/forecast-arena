@@ -22,7 +22,7 @@
         6,
         24
       ],
-      "origin_step_hours": 24,
+      "origin_step_hours": 167,
       "min_train_hours": 17520
     },
     "tiers": {

@@ -10,7 +10,7 @@ data:
 protocol:
   horizon: 24            # the 24 hours after the origin
   eval_horizons: [1, 3, 6, 24]
-  origin_step_hours: 24  # daily origins
+  origin_step_hours: 167  # ~weekly, phase-shifted: origins rotate the wall hour (168 would pin every origin to the same wall hour)
   min_train_hours: 17520 # 2 years of history before the first origin
 
 events:

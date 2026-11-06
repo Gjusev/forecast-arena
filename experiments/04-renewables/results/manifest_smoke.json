@@ -4,9 +4,9 @@
   "n_series": 2,
   "horizon": 24,
   "origins": [
-    68712,
-    68736,
-    68760
+    68288,
+    68455,
+    68622
   ],
   "models": [
     "seasonal_naive_24h",
@@ -15,12 +15,12 @@
   ],
   "python": "3.12.2",
   "platform": "Windows-11-10.0.26200-SP0",
-  "started": "2026-11-06T18:03:49",
-  "finished": "2026-11-06T18:03:49",
+  "started": "2026-11-06T19:03:33",
+  "finished": "2026-11-06T19:03:33",
   "wall_seconds": null,
   "per_model_seconds": {
-    "seasonal_naive_24h": 0.0004408999993756879,
-    "lightgbm": 1.7248648999993748,
-    "chronos_2": 8.30863859999954
+    "seasonal_naive_24h": 0.0004647000096156262,
+    "lightgbm": 1.6087202999988222,
+    "chronos_2": 4.764857999987726
   }
 }

@@ -45,6 +45,8 @@ EXPS = {
         "y": "average arrival delay, min",
         "x": "hours after the forecast was made",
         "x_offset": 0,
+        "primary_target": "avg_delay_min",
+        "by_h": True,
     },
     "Power prices": {
         "dir": ROOT / "experiments/02-electricity-prices/results",
@@ -53,6 +55,28 @@ EXPS = {
         "y": "day-ahead price, €/MWh",
         "x": "delivery hour (forecast made the morning before)",
         "x_offset": -1,
+        "primary_target": "day_ahead_price",
+        "by_h": False,
+    },
+    "Weather": {
+        "dir": ROOT / "experiments/03-dwd-weather/results",
+        "prefix": "air_temperature/",
+        "unit": "°C",
+        "y": "2m air temperature, °C",
+        "x": "hours after the forecast was made",
+        "x_offset": 0,
+        "primary_target": "air_temperature",
+        "by_h": True,
+    },
+    "Renewables": {
+        "dir": ROOT / "experiments/04-renewables/results",
+        "prefix": "",
+        "unit": "MW",
+        "y": "generation, MW",
+        "x": "delivery hour (forecast made the day before)",
+        "x_offset": -1,
+        "primary_target": "wind_total",
+        "by_h": True,
     },
 }
 REAL_MODELS = [m for m, f in MODEL_FAMILY.items() if f != "baseline"]
@@ -86,19 +110,28 @@ def nice_ts(s: str) -> str:
 def preds(exp: str) -> pl.DataFrame:
     e = EXPS[exp]
     p = pl.read_parquet(e["dir"] / "predictions.parquet")
-    tier = "full" if "full" in p["tier"].unique().to_list() else p["tier"].max()
+    tiers = set(p["tier"].unique().to_list())
+    tier = next(t for t in ("full", "pilot", "smoke") if t in tiers)
     return p.filter((pl.col("tier") == tier) & pl.col("series_id").str.starts_with(e["prefix"]))
 
 
 @cache
-def metrics(exp: str) -> pl.DataFrame:
-    return pl.read_parquet(EXPS[exp]["dir"] / "metrics_full.parquet")
+def metrics(exp: str) -> tuple[pl.DataFrame, str]:
+    """Best available tier: full, then pilot, then smoke."""
+    for tier in ("full", "pilot", "smoke"):
+        f = EXPS[exp]["dir"] / f"metrics_{tier}.parquet"
+        if f.exists():
+            return pl.read_parquet(f), tier
+    return pl.DataFrame(), ""
 
 
 @cache
 def manifest(exp: str) -> dict:
-    p = EXPS[exp]["dir"] / "manifest_full.json"
-    return json.loads(p.read_text()) if p.exists() else {}
+    for tier in ("full", "pilot", "smoke"):
+        p = EXPS[exp]["dir"] / f"manifest_{tier}.json"
+        if p.exists():
+            return json.loads(p.read_text())
+    return {}
 
 
 @cache
@@ -129,9 +162,13 @@ def models_of(exp: str) -> list[str]:
 
 
 def leaderboard(exp: str, h: int | None) -> pl.DataFrame:
-    m = metrics(exp)
-    if exp == "Train delays":
-        m = m.filter((pl.col("target") == "avg_delay_min") & (pl.col("h") == (h or 1)))
+    e = EXPS[exp]
+    m, _tier = metrics(exp)
+    if m.height == 0:
+        return m
+    m = m.filter(pl.col("target") == e["primary_target"])
+    if e["by_h"]:
+        m = m.filter(pl.col("h") == (int(h) if h is not None else 1))
     m = m.group_by("model").agg(
         pl.col("mae").mean(),
         pl.col("skill_vs_baseline_pct").mean().alias("skill"),
@@ -324,7 +361,10 @@ def jump(exp, series, how):
 
 
 def board(exp, h, metric):
-    lb = leaderboard(exp, int(h) if exp == "Train delays" else None)
+    lb = leaderboard(exp, h if EXPS[exp]["by_h"] else None)
+    if lb.height == 0:
+        empty = pl.DataFrame({"Model": [], "Family": []})
+        return go.Figure(), empty, "No results for this experiment yet - run the benchmark first."
     if metric == SKILL:
         lb = lb.sort("skill", descending=True)
         vals, fmt, xlab = (
@@ -353,9 +393,7 @@ def board(exp, h, metric):
     )
     fig.update_yaxes(autorange="reversed")
     title = (
-        "Train delays, " + f"{int(h)} h ahead"
-        if exp == "Train delays"
-        else "Power prices, pooled over 24 delivery hours"
+        f"{exp}, {int(h)} h ahead" if EXPS[exp]["by_h"] else f"{exp}, pooled over 24 delivery hours"
     )
     styled(fig, title, xlab, "", h=440).update_layout(hovermode="closest", showlegend=False)
 
@@ -382,6 +420,21 @@ def board_story(exp: str, lb: pl.DataFrame, h) -> str:
     best = lb.sort("mae").row(0, named=True)
     naive = lb.filter(pl.col("model") == "seasonal_naive_24h").row(0, named=True)
     fm, gb = best_of(lb, "foundation"), best_of(lb, "ml")
+    if exp == "Weather":
+        return (
+            f"**In plain words.** Predicting the temperature {int(h)} hour{'s' if int(h) > 1 else ''} ahead at 30 German "
+            f"city stations, the best model (**{label(best['model'])}**) misses by "
+            f"**{best['mae']:.2f} {unit}** on average; simply repeating yesterday's value for "
+            f"this hour misses by {naive['mae']:.2f}. The average hides what matters most: heat "
+            "and frost hours. How often models catch those is in the technical report."
+        )
+    if exp == "Renewables":
+        return (
+            f"**In plain words.** Predicting tomorrow's wind and solar output, the best model "
+            f"(**{label(best['model'])}**) misses by **{best['mae']:.0f} {unit}** on average; "
+            f"repeating yesterday's output misses by {naive['mae']:.0f}. For scale, the whole "
+            f"German wind fleet reaches about 50,000 MW at full blast."
+        )
     if exp == "Train delays":
         ahead = f"{int(h)} hour{'s' if int(h) > 1 else ''} ahead"
         return (
@@ -741,6 +794,10 @@ of power.
 {money}**4. The honest catch.** AI is not magic. On trains it was no better than models trained
 in seconds on a laptop, and no model predicts sudden disruptions from history alone.
 
+**5. New in the arena.** German weather stations (30 cities, hourly temperature) and
+wind + solar generation are now benchmarked with the same protocol - early results are in
+the Leaderboard and Replay tabs.
+
 Try it yourself in **Replay a forecast**: pick a moment, bet on a model, reveal reality.
 """
 
@@ -973,7 +1030,7 @@ def build_app(style_kwargs: dict | None = None) -> gr.Blocks:
         with gr.Tab("Leaderboard"):
             with gr.Row():
                 l_exp = gr.Radio(exps, value=exps[0], label="Experiment")
-                l_h = gr.Radio(["1", "3", "6", "24"], value="1", label="Hours ahead (trains)")
+                l_h = gr.Radio(["1", "3", "6", "24"], value="1", label="Hours ahead")
                 l_metric = gr.Radio(["Average miss", SKILL], value="Average miss", label="Rank by")
             l_story = gr.Markdown(elem_classes="fa-explain")
             l_plot = gr.Plot(show_label=False)

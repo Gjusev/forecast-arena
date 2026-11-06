@@ -165,9 +165,13 @@ uv sync --group dev --extra ml --extra foundation
 # fetch data + build aggregates
 uv run arena build-data 01
 uv run arena build-data 02
+uv run arena build-data 03   # weather (downloads ~130 MB from DWD)
+uv run arena build-data 04   # renewables (energy-charts API)
 
 # run benchmarks (smoke -> pilot -> full)
 uv run --extra ml --extra foundation arena run 01 --tier smoke
+uv run --extra ml --extra foundation arena run 03 --tier pilot   # weather
+uv run --extra ml --extra foundation arena run 04 --tier pilot   # renewables
 uv run --extra ml --extra foundation arena run 01 --tier pilot
 uv run --extra ml --extra foundation arena run 02 --tier smoke
 

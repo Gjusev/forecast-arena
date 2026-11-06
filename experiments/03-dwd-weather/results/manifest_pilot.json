@@ -1,0 +1,41 @@
+{
+  "experiment": "dwd_weather",
+  "tier": "pilot",
+  "n_series": 30,
+  "horizon": 24,
+  "origins": [
+    102523,
+    102690,
+    102857,
+    103024,
+    103191,
+    103358,
+    103525,
+    103692
+  ],
+  "models": [
+    "seasonal_naive_24h",
+    "hour_of_week_climatology",
+    "lightgbm",
+    "xgboost",
+    "timestral_28M",
+    "timestral_209M",
+    "chronos_2",
+    "timesfm_3_0"
+  ],
+  "python": "3.12.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "started": "2026-11-06T19:08:29",
+  "finished": "2026-11-06T19:08:29",
+  "wall_seconds": null,
+  "per_model_seconds": {
+    "seasonal_naive_24h": 0.012485600083891768,
+    "hour_of_week_climatology": 0.006536799992318265,
+    "lightgbm": 69.60435000004509,
+    "xgboost": 87.13371649999317,
+    "timestral_28M": 7.794671700059553,
+    "timestral_209M": 42.17170129995793,
+    "chronos_2": 17.29944319997594,
+    "timesfm_3_0": 61.29152740004065
+  }
+}

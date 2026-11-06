@@ -35,6 +35,8 @@ And on the worst hour of the test (Frankfurt Hbf, 61 min average delay), all six
 
 My takeaway: pretrained forecasting shines where data has rhythm. Where it doesn't, cheap models do just as well.
 
+New this week: the arena now covers German weather stations and wind + solar generation with the same protocol. Early runs are live.
+
 Code, data and every forecast are open. Replay any of them in the demo (link in comments).
 
 ## Long version

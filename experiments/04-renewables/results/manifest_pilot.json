@@ -1,0 +1,41 @@
+{
+  "experiment": "renewables",
+  "tier": "pilot",
+  "n_series": 4,
+  "horizon": 24,
+  "origins": [
+    67453,
+    67620,
+    67787,
+    67954,
+    68121,
+    68288,
+    68455,
+    68622
+  ],
+  "models": [
+    "seasonal_naive_24h",
+    "hour_of_week_climatology",
+    "lightgbm",
+    "xgboost",
+    "timestral_28M",
+    "timestral_209M",
+    "chronos_2",
+    "timesfm_3_0"
+  ],
+  "python": "3.12.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "started": "2026-11-06T19:09:09",
+  "finished": "2026-11-06T19:09:09",
+  "wall_seconds": null,
+  "per_model_seconds": {
+    "seasonal_naive_24h": 0.0019456000154605135,
+    "hour_of_week_climatology": 0.0007799999948474579,
+    "lightgbm": 6.593332699994789,
+    "xgboost": 7.544752299989341,
+    "timestral_28M": 1.493064599999343,
+    "timestral_209M": 5.054042399977334,
+    "chronos_2": 6.214965999984997,
+    "timesfm_3_0": 9.379481100011617
+  }
+}
