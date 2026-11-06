@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>forecast-arena — AI vs Reality (motion)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@500;600&display=block" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: #0b0b0b; }
+  svg { display: block; }
+  text { font-family: Barlow, sans-serif; font-weight: 500; }
+  .d { font-family: "Barlow Condensed", sans-serif; font-weight: 800; letter-spacing: -0.01em; }
+  .s { font-family: "Barlow Condensed", sans-serif; font-weight: 600; }
+</style>
+</head>
+<body>
+<svg id="stage" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+/* Deterministic motion: renderAt(t) draws frame t from scratch. No clocks, no rAF.
+   The renderer (scripts/render_motion.py) calls setup(story) then renderAt(t) per frame. */
+const C = { ink: "#0b0b0b", paper: "#f3f1ea", dim: "#6d6b64", faint: "#26251f",
+  signal: "#ffd400", signalField: "#3d3406",
+  foundation: "#2a78d6", ml: "#eb6834", baseline: "#1baf7a" };
+const FAMILY = { timestral_28M: "foundation", timestral_209M: "foundation", chronos_2: "foundation",
+  timesfm_3_0: "foundation", lightgbm: "ml", xgboost: "ml", seasonal_naive_24h: "baseline",
+  hour_of_week_climatology: "baseline" };
+const LABEL = { timestral_28M: "Timestral 28M", timestral_209M: "Timestral 209M", chronos_2: "Chronos-2",
+  timesfm_3_0: "TimesFM 3.0", lightgbm: "LightGBM", xgboost: "XGBoost",
+  seasonal_naive_24h: "Seasonal naive", hour_of_week_climatology: "Climatology" };
+const W = 1920, H = 1080, M = 120, RX = 1420;
+const fam = m => C[FAMILY[m]];
+
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const eo = x => 1 - Math.pow(1 - x, 3);
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const expo = x => x >= 1 ? 1 : 1 - Math.pow(2, -10 * x);
+const lerp = (a, b, p) => a + (b - a) * p;
+
+let S, svg;
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs = {}, parent = svg, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  parent.appendChild(e);
+  return e;
+}
+function path(vals, sx, sy, upto = vals.length) {
+  let d = "", pen = false;
+  vals.slice(0, upto).forEach((v, i) => {
+    if (v === null || Number.isNaN(v)) { pen = false; return; }
+    d += (pen ? "L" : "M") + sx(i).toFixed(1) + " " + sy(v).toFixed(1);
+    pen = true;
+  });
+  return d;
+}
+// draw a line progressively: p in 0..1 reveals by x, partial last segment interpolated
+function linePart(vals, sx, sy, p) {
+  const n = vals.length - 1, f = p * n, k = Math.floor(f);
+  let d = path(vals, sx, sy, k + 1);
+  if (k < n && d) {
+    const a = vals[k], b = vals[k + 1], r = f - k;
+    if (a !== null && b !== null && !Number.isNaN(a) && !Number.isNaN(b))
+      d += "L" + lerp(sx(k), sx(k + 1), r).toFixed(1) + " " + sy(lerp(a, b, r)).toFixed(1);
+  }
+  return d;
+}
+const fmt = (v, d = 2) => v.toFixed(d);
+
+// text that rises out of a mask line: returns attrs for y/opacity
+function rise(t, a, dur = .6, dist = 40) {
+  const p = eo(prog(t, a, a + dur));
+  return { dy: (1 - p) * dist, o: p };
+}
+function txt(parent, x, y, s, size, fill, cls = "", t = 99, a = -9, extra = {}) {
+  const r = rise(t, a);
+  return el("text", Object.assign({ x, y: y + r.dy, "font-size": size, fill, opacity: r.o, class: cls }, extra), parent, s);
+}
+
+/* ---------------- timeline ---------------- */
+const CUTS = [0, 3.6, 10.4, 14.8, 21.0, 25.2, 29.6, 33.5];
+const WIPE = .6;
+const DURATION = CUTS[CUTS.length - 1];
+const SCENES = [title, trains, trainsBoard, power, powerBoard, money, endCard];
+
+function barX(t, cut) { return lerp(-80, W + 80, eio(prog(t, cut - WIPE / 2, cut + WIPE / 2))); }
+
+function renderAt(t) {
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = "";
+  el("rect", { width: W, height: H, fill: C.ink });
+  const defs = el("defs");
+  SCENES.forEach((fn, i) => {
+    const a = CUTS[i], b = CUTS[i + 1];
+    const start = i === 0 ? -1 : a - WIPE / 2, end = i === SCENES.length - 1 ? 1e9 : b + WIPE / 2;
+    if (t < start || t > end) return;
+    const left = i === 0 ? 0 : clamp(barX(t, a), 0, W);       // revealed from left edge by entering bar
+    const right = i === SCENES.length - 1 ? W : W;            // full width
+    const leftCut = i === SCENES.length - 1 ? 0 : clamp(barX(t, b), 0, W); // exiting bar eats from left
+    const x0 = Math.max(0, leftCut), x1 = i === 0 ? right : left;
+    if (x1 - x0 <= 0) return;
+    const cp = el("clipPath", { id: "c" + i }, defs);
+    el("rect", { x: x0, y: 0, width: x1 - x0, height: H }, cp);
+    const g = el("g", { "clip-path": `url(#c${i})` });
+    fn(g, t - (i === 0 ? 0 : a - WIPE / 2), t);
+  });
+  // the origin bar sweeping between scenes
+  CUTS.slice(1, -1).forEach(cut => {
+    if (Math.abs(t - cut) < WIPE / 2) el("rect", { x: barX(t, cut) - 14, y: 0, width: 28, height: H, fill: C.signal });
+  });
+}
+
+/* ---------------- shared bits ---------------- */
+function chrome(g, label) {
+  el("text", { x: M, y: 92, "font-size": 30, fill: C.paper, class: "s" }, g, "forecast-arena");
+  el("text", { x: W - M, y: 92, "font-size": 30, fill: C.dim, class: "s", "text-anchor": "end" }, g, label);
+}
+function axisY(g, x, x1, ticks, sy, unit, op = 1) {
+  ticks.forEach(v => {
+    el("text", { x: x - 18, y: sy(v) + 9, "font-size": 26, fill: C.dim, "text-anchor": "end", opacity: op }, g, v + unit);
+    el("rect", { x, y: sy(v) - 1, width: x1 - x, height: 2, fill: C.faint, opacity: op }, g);
+  });
+}
+
+/* ---------------- 1. title ---------------- */
+function title(g, u) {
+  chrome(g, "github.com/Gjusev/forecast-arena");
+  const vals = S.prices.actual.map(v => Number.isNaN(v) ? null : v);
+  const ox = 1080, sx = i => M + i * ((ox - M) / 23), sy = v => 900 - v * 1.1;
+  el("path", { d: linePart(vals, sx, sy, eo(prog(u, 0, 1.4))), fill: "none", stroke: C.paper, "stroke-width": 6, "stroke-linejoin": "round" }, g);
+  const drop = expo(prog(u, 1.0, 1.5));
+  el("rect", { x: ox + 8, y: 700, width: 12, height: 300 * drop, fill: C.signal }, g);
+  // forecast vs reality fork to the right of the origin
+  const tp = S.prices.pred.timestral_209M, fsx = i => ox + 28 + i * (620 / 23);
+  el("path", { d: linePart(tp, fsx, sy, eo(prog(u, 1.4, 2.6))), fill: "none", stroke: C.signal, "stroke-width": 6, "stroke-dasharray": "2 14", "stroke-linecap": "round" }, g);
+  el("path", { d: linePart(vals, fsx, sy, eo(prog(u, 1.9, 3.1))), fill: "none", stroke: C.paper, "stroke-width": 6, "stroke-linejoin": "round" }, g);
+  const r1 = rise(u, .2, .7, 80), r2 = rise(u, .38, .7, 80);
+  const head = el("text", { x: M - 10, "font-size": 300, class: "d" }, g);
+  el("tspan", { y: 470 + r1.dy, fill: C.signal, opacity: r1.o }, head, "AI ");
+  el("tspan", { y: 470 + r2.dy, fill: C.paper, opacity: r2.o }, head, "vs Reality");
+  txt(g, M, 572, "Eight forecasting models. Two real German systems. Every number published.", 44, C.paper, "", u, .8);
+}
+
+/* ---------------- 2. trains: the miss ---------------- */
+function trains(g, u) {
+  chrome(g, "Experiment 1 · Deutsche Bahn delays");
+  txt(g, M, 230, "Frankfurt Hbf, 5 Feb 2026, 02:00", 84, C.paper, "d", u, .2);
+  txt(g, M, 292, "At 02:00, six models predicted the average train delay for the next 24 hours.", 38, C.paper, "", u, .4);
+  const models = ["timestral_209M", "timestral_28M", "chronos_2", "timesfm_3_0", "lightgbm", "xgboost"];
+  const x0 = M + 80, x1 = 1340, y0 = 960, y1 = 380;
+  const zoom = eio(prog(u, 2.95, 3.75));
+  const ymax = lerp(12, 70, zoom);
+  const sx = i => x0 + i * ((x1 - x0) / 23), sy = v => y0 - (v / ymax) * (y0 - y1);
+  const ticks = zoom < .5 ? [0, 4, 8, 12] : [0, 20, 40, 60];
+  axisY(g, x0, x1, ticks, sy, "", clamp(Math.abs(zoom - .5) * 2) * eo(prog(u, .4, 1)));
+  el("text", { x: x0, y: y0 + 48, "font-size": 26, fill: C.dim, opacity: eo(prog(u, .4, 1)) }, g, "delay in minutes · hours after the prediction →");
+  el("rect", { x: x0 - 10, y: y1 - 40, width: 10, height: (y0 - y1 + 40) * expo(prog(u, .5, 1)), fill: C.signal }, g);
+  models.forEach((m, k) => {
+    el("path", { d: linePart(S.delays.pred[m], sx, sy, eo(prog(u, .9 + k * .12, 2.2 + k * .12))), fill: "none", stroke: fam(m), "stroke-width": 5, "stroke-linejoin": "round", opacity: .95 }, g);
+  });
+  const lo = Math.min(...models.map(m => S.delays.pred[m][0])), hi = Math.max(...models.map(m => S.delays.pred[m][0]));
+  // legend by family
+  [["Pretrained AI (4 models)", C.foundation], ["Classic machine learning (2)", C.ml], ["What really happened", C.paper]].forEach(([s, c], k) => {
+    const r = rise(u, 1.6 + k * .1);
+    el("rect", { x: RX, y: 418 + k * 54 + r.dy, width: 28, height: 8, fill: c, opacity: r.o }, g);
+    el("text", { x: RX + 42, y: 430 + k * 54 + r.dy, "font-size": 30, fill: C.paper, opacity: r.o }, g, s);
+  });
+  // reality arrives
+  const rp = eo(prog(u, 2.9, 3.6));
+  if (rp > 0) {
+    const act = S.delays.actual;
+    const cp = el("clipPath", { id: "chart2" }, g);
+    el("rect", { x: 0, y: y1 - 40, width: W, height: y0 - y1 + 80 }, cp);
+    el("path", { d: linePart(act, sx, sy, rp), fill: "none", stroke: C.paper, "stroke-width": 8, "stroke-linejoin": "round", "clip-path": "url(#chart2)" }, g);
+    const pop = expo(prog(u, 2.9, 3.3));
+    el("circle", { cx: sx(0), cy: sy(act[0]), r: 16 * pop, fill: C.paper }, g);
+    const r = rise(u, 3.6, .6, 30);
+    el("text", { x: sx(0) + 40, y: sy(act[0]) + 30 + r.dy, "font-size": 120, fill: C.paper, opacity: r.o, class: "d" }, g, `${Math.round(act[0] * eo(prog(u, 3.6, 4.4)))} min`);
+    txt(g, RX, 700, "Reality, first hour: 61.", 36, C.paper, "", u, 4.4);
+    txt(g, RX, 748, `Six forecasts: ${fmt(lo, 1)} to ${fmt(hi, 1)}.`, 36, C.paper, "", u, 4.5);
+    txt(g, RX, 850, "Nobody saw it.", 80, C.signal, "d", u, 5.0);
+  }
+}
+
+/* ---------------- bars helper ---------------- */
+function bars(g, u, rows, { x0, y0, rowH, max, unit, digits, valueKey, t0 }) {
+  const wmax = 1100;
+  rows.forEach((r, k) => {
+    const p = eo(prog(u, t0 + k * .08, t0 + .9 + k * .08));
+    const y = y0 + k * rowH, v = r[valueKey];
+    el("text", { x: x0 - 24, y: y + 36, "font-size": 34, fill: C.paper, "text-anchor": "end", opacity: p }, g, LABEL[r.model]);
+    el("rect", { x: x0, y: y + 8, width: Math.max(0, (v / max) * wmax * p), height: rowH - 22, fill: fam(r.model) }, g);
+    el("text", { x: x0 + Math.max(0, (v / max) * wmax * p) + 18, y: y + 38, "font-size": 34, fill: C.paper, opacity: p, class: "s" }, g,
+      (v >= 0 && unit === "%" ? "+" : "") + fmt(v * p, digits) + unit);
+  });
+}
+
+/* ---------------- 3. trains board ---------------- */
+function trainsBoard(g, u) {
+  chrome(g, "Experiment 1 · 110 rolling origins, 5 hub stations");
+  txt(g, M, 230, `Over ${S.n_delay_forecasts} forecasts, it's a dead heat.`, 84, C.paper, "d", u, .3);
+  txt(g, M, 292, "Average miss in minutes, predicting 1 hour ahead. Shorter bar = better.", 38, C.paper, "", u, .45);
+  bars(g, u, S.leader_delays, { x0: 520, y0: 350, rowH: 76, max: 4, unit: "", digits: 2, valueKey: "mae", t0: .6 });
+  const fm = S.leader_delays.find(r => FAMILY[r.model] === "foundation").mae;
+  const gb = S.leader_delays.find(r => FAMILY[r.model] === "ml").mae;
+  const r = rise(u, 2.0, .6, 50);
+  el("text", { x: W - M, y: 520 + r.dy, "font-size": 170, fill: C.signal, opacity: r.o, class: "d", "text-anchor": "end" }, g, fmt(gb - fm) + " min");
+  txt(g, W - M, 580, "between the best pretrained AI", 34, C.paper, "", u, 2.3, { "text-anchor": "end" });
+  txt(g, W - M, 624, "and the best classic machine learning", 34, C.paper, "", u, 2.35, { "text-anchor": "end" });
+}
+
+/* ---------------- 4. power: the catch ---------------- */
+function power(g, u) {
+  chrome(g, "Experiment 2 · German day-ahead prices");
+  txt(g, M, 230, "Sunday 7 July 2024, solar noon", 84, C.paper, "d", u, .2);
+  txt(g, M, 292, "Predicted a day ahead. Below zero, power producers pay you to use electricity.", 38, C.paper, "", u, .4);
+  const x0 = M + 80, x1 = 1340, y0 = 960, y1 = 380, lo = -70, hi = 140;
+  const sx = i => x0 + i * ((x1 - x0) / 23), sy = v => y0 - ((v - lo) / (hi - lo)) * (y0 - y1);
+  const fade = eo(prog(u, .4, 1));
+  axisY(g, x0, x1, [-50, 0, 50, 100], sy, "", fade);
+  el("rect", { x: x0, y: sy(0) - 2, width: x1 - x0, height: 4, fill: C.dim, opacity: fade }, g);
+  el("text", { x: x0, y: y0 + 48, "font-size": 26, fill: C.dim, opacity: fade }, g, "price in €/MWh · hour of the day, 00:00 to 23:00 →");
+  el("rect", { x: x0 - 10, y: y1 - 40, width: 10, height: (y0 - y1 + 40) * expo(prog(u, .5, 1)), fill: C.signal }, g);
+  const act = S.prices.actual;
+  // negative hours fill
+  const shade = eo(prog(u, 3.4, 4.0));
+  act.forEach((v, i) => {
+    if (v < 0 && shade > 0) el("rect", { x: sx(i) - 22, y: sy(0), width: 44, height: (sy(v) - sy(0)) * shade + 2, fill: C.signal, opacity: .9 }, g);
+  });
+  ["timestral_209M", "lightgbm"].forEach((m, k) => {
+    el("path", { d: linePart(S.prices.pred[m], sx, sy, eo(prog(u, .9 + k * .2, 2.2 + k * .2))), fill: "none", stroke: fam(m), "stroke-width": 6, "stroke-linejoin": "round" }, g);
+  });
+  el("path", { d: linePart(act, sx, sy, eo(prog(u, 2.4, 3.4))), fill: "none", stroke: C.paper, "stroke-width": 8, "stroke-linejoin": "round" }, g);
+  [["Timestral 209M (AI)", C.foundation], ["LightGBM (classic)", C.ml], ["What really happened", C.paper]].forEach(([s, c], k) => {
+    const r = rise(u, 1.6 + k * .1);
+    el("rect", { x: RX, y: 418 + k * 54 + r.dy, width: 28, height: 8, fill: c, opacity: r.o }, g);
+    el("text", { x: RX + 42, y: 430 + k * 54 + r.dy, "font-size": 30, fill: C.paper, opacity: r.o }, g, s);
+  });
+  const nneg = act.filter(v => v < 0).length;
+  const r = rise(u, 3.8, .6, 40);
+  el("text", { x: RX, y: 740 + r.dy, "font-size": 140, fill: C.signal, opacity: r.o, class: "d" }, g, `${Math.round(nneg * eo(prog(u, 3.8, 4.6)))} h`);
+  txt(g, RX, 796, "of negative prices.", 36, C.paper, "", u, 4.1);
+  txt(g, RX, 846, "Both models saw it", 36, C.paper, "", u, 4.4);
+  txt(g, RX, 890, "a day early.", 36, C.paper, "", u, 4.45);
+}
+
+/* ---------------- 5. power board ---------------- */
+function powerBoard(g, u) {
+  chrome(g, "Experiment 2 · 1,408 daily origins, 2021 to 2026");
+  txt(g, M, 230, "Over 1,408 days, pretrained AI wins.", 84, C.paper, "d", u, .3);
+  txt(g, M, 292, "How much smaller the miss is than just repeating yesterday's prices. Longer bar = better.", 38, C.paper, "", u, .45);
+  const rows = S.leader_prices.filter(r => r.skill_vs_baseline_pct > 0);
+  bars(g, u, rows, { x0: 520, y0: 350, rowH: 82, max: 50, unit: "%", digits: 1, valueKey: "skill_vs_baseline_pct", t0: .6 });
+  const f1 = m => S.neg_f1.find(r => r.model === m).f1;
+  const r = rise(u, 2.0, .6, 40);
+  el("text", { x: W - M, y: 760 + r.dy, "font-size": 34, fill: C.paper, opacity: r.o, "text-anchor": "end" }, g, "Negative-price hours spotted (score 0 to 1)");
+  const r2 = rise(u, 2.2, .6, 40);
+  el("text", { x: W - M - 330, y: 880 + r2.dy, "font-size": 130, fill: C.foundation, opacity: r2.o, class: "d", "text-anchor": "end" }, g, fmt(f1("timestral_209M")));
+  el("text", { x: W - M, y: 880 + r2.dy, "font-size": 130, fill: C.ml, opacity: r2.o, class: "d", "text-anchor": "end" }, g, fmt(f1("xgboost")));
+  txt(g, W - M - 330, 930, "Timestral 209M (AI)", 30, C.paper, "", u, 2.4, { "text-anchor": "end" });
+  txt(g, W - M, 930, "XGBoost (classic)", 30, C.paper, "", u, 2.45, { "text-anchor": "end" });
+}
+
+/* ---------------- 6. money ---------------- */
+function money(g, u) {
+  chrome(g, "Scheduling simulation · wholesale cost only");
+  txt(g, M, 230, "Move 4 MWh a day to the cheap hours.", 84, C.paper, "d", u, .3);
+  txt(g, M, 292, `A factory or battery that can choose when to use power. Average cost per day, ${S.scheduling.n_days.toLocaleString("en")} days.`, 38, C.paper, "", u, .45);
+  const sc = S.scheduling;
+  const rows = [["Always at midday", sc.fixed_midday_cost, C.dim], ["Following the AI forecast (Chronos-2)", sc.model_cost, C.foundation], ["Knowing the future", sc.oracle_cost, C.paper]];
+  rows.forEach(([s, v, c], k) => {
+    const p = eo(prog(u, .6 + k * .12, 1.6 + k * .12)), y = 380 + k * 140;
+    el("text", { x: M, y: y + 34, "font-size": 34, fill: C.paper, opacity: p }, g, s);
+    el("rect", { x: M, y: y + 52, width: (v / 260) * 1000 * p, height: 56, fill: c }, g);
+    el("text", { x: M + (v / 260) * 1000 * p + 20, y: y + 96, "font-size": 44, fill: C.paper, opacity: p, class: "s" }, g, `${fmt(v * p, 1)} €`);
+  });
+  const save = sc.fixed_midday_cost - sc.model_cost, share = save / (sc.fixed_midday_cost - sc.oracle_cost);
+  const r = rise(u, 1.9, .6, 50);
+  el("text", { x: W - M, y: 560 + r.dy, "font-size": 200, fill: C.signal, opacity: r.o, class: "d", "text-anchor": "end" }, g, `−${fmt(save * eo(prog(u, 1.9, 2.8)), 1)} €`);
+  txt(g, W - M, 620, "per day, 17% cheaper", 38, C.paper, "", u, 2.3, { "text-anchor": "end" });
+  txt(g, W - M, 760, `${Math.round(share * 100)}%`, 120, C.paper, "d", u, 2.7, { "text-anchor": "end" });
+  txt(g, W - M, 812, "of the best possible saving", 38, C.paper, "", u, 2.9, { "text-anchor": "end" });
+}
+
+/* ---------------- 7. end card ---------------- */
+function mark(g, x, y, s, p) {
+  // the logo mark: history -> origin -> forecast (signal, dotted) and reality (paper) split
+  const T = (px, py) => `${(x + px * s).toFixed(1)} ${(y + py * s).toFixed(1)}`;
+  const seg = (pts, q) => linePart(pts.map(v => v[1]), i => x + pts[i][0] * s, v => y + v * s, q);
+  el("rect", { x, y, width: 64 * s, height: 64 * s, fill: C.ink }, g);
+  el("path", { d: seg([[6, 40], [13, 33], [19, 37], [26.5, 30.5]], eo(prog(p, 0, .35))), fill: "none", stroke: C.paper, "stroke-width": 4.2 * s, "stroke-linejoin": "round", "stroke-linecap": "round" }, g);
+  el("rect", { x: x + 31 * s, y: y + 10 * s, width: 3.4 * s, height: 44 * s * expo(prog(p, .3, .55)), fill: C.signal }, g);
+  el("path", { d: seg([[39, 28.5], [45.3, 24.7], [51.6, 20.9], [58, 17]], eo(prog(p, .5, .85))), fill: "none", stroke: C.signal, "stroke-width": 4.2 * s, "stroke-linecap": "round", "stroke-dasharray": `${0.1 * s} ${7 * s}` }, g);
+  el("path", { d: seg([[38.5, 32.5], [43.5, 41.5], [48.5, 35.5], [53.5, 44], [58, 38]], eo(prog(p, .6, 1))), fill: "none", stroke: C.paper, "stroke-width": 4.2 * s, "stroke-linejoin": "round", "stroke-linecap": "round" }, g);
+}
+function endCard(g, u) {
+  mark(g, M, 250, 4.2, prog(u, .3, 1.6));
+  txt(g, M + 330, 380, "forecast-arena", 140, C.paper, "d", u, .9);
+  txt(g, M + 334, 450, "Real data. Real predictions. Real results.", 44, C.paper, "", u, 1.1);
+  txt(g, M, 720, "Code, data, reports", 34, C.dim, "", u, 1.5);
+  txt(g, M, 780, "github.com/Gjusev/forecast-arena", 56, C.paper, "s", u, 1.55);
+  txt(g, M, 880, "Explore every forecast", 34, C.dim, "", u, 1.7);
+  txt(g, M, 940, "huggingface.co/spaces/Gjusev/forecast-arena", 56, C.signal, "s", u, 1.75);
+}
+
+window.setup = story => { S = story; svg = document.getElementById("stage"); return DURATION; };
+window.renderAt = renderAt;
+window.renderMark = (size) => {   // standalone mark for brand exports
+  svg = document.getElementById("stage");
+  svg.setAttribute("width", size); svg.setAttribute("height", size);
+  svg.setAttribute("viewBox", "0 0 64 64"); svg.innerHTML = "";
+  mark(svg, 0, 0, 1, 1);
+};
+</script>
+</body>
+</html>
