@@ -1,6 +1,7 @@
 """Fast unit tests: metrics, protocol guards, baselines, GBMs. No downloads."""
 
 import numpy as np
+import polars as pl
 import pytest
 
 from forecast_arena.evaluation import metrics as M
@@ -95,8 +96,6 @@ class TestPanels:
     def test_hour_of_week_no_int8_overflow(self):
         # Regression: polars dt.weekday() is Int8; dow*24 overflows for Sundays
         # unless cast. Sunday 22:00 must be 166, not -90.
-        import polars as pl
-
         from forecast_arena.data.panels import grid_and_series
 
         df = pl.DataFrame(

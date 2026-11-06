@@ -37,7 +37,7 @@ foundation = [
 arena = "forecast_arena.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.5"]
+dev = ["pytest>=8", "ruff>=0.17,<0.18"]
 
 [build-system]
 requires = ["hatchling"]

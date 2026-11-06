@@ -25,17 +25,27 @@ def delays():
     secs = man.get("per_model_seconds") or {}
 
     C.fig_model_accuracy(
-        metrics, "avg_delay_min", 1, ASSETS,
+        metrics,
+        "avg_delay_min",
+        1,
+        ASSETS,
         "Train delay forecasting — average arrival delay, 1 hour ahead\n"
         "5 German hub stations · 110 rolling origins · 2026",
     )
     C.fig_model_accuracy(
-        metrics, "n_delayed_gt5", 1, ASSETS,
+        metrics,
+        "n_delayed_gt5",
+        1,
+        ASSETS,
         "Disruption forecasting — delayed arrivals per hour, 1 hour ahead\n"
         "5 German hub stations · 110 rolling origins · 2026",
     )
     C.fig_accuracy_runtime(
-        metrics, secs, "avg_delay_min", 1, ASSETS,
+        metrics,
+        secs,
+        "avg_delay_min",
+        1,
+        ASSETS,
         "Accuracy vs compute — train delays, 1 hour ahead",
     )
     # actual vs predicted: pick a high-disruption Frankfurt origin
@@ -47,7 +57,10 @@ def delays():
     )
     worst = fk.sort("y_true", descending=True)["origin_ts"][0]
     C.fig_actual_vs_predicted(
-        preds, series, worst, ASSETS,
+        preds,
+        series,
+        worst,
+        ASSETS,
         f"Forecasting a disruption day — Frankfurt (Main) Hbf, origin {worst[:10]}",
     )
     # detection chart on the secondary target
@@ -55,9 +68,7 @@ def delays():
     ev = event_detection_metrics(
         preds.filter(pl.col("series_id").str.starts_with("n_delayed_gt5")), thr, [1, 6]
     )
-    ev = ev.group_by("model").agg(
-        pl.col("evt_precision").mean(), pl.col("evt_recall").mean()
-    )
+    ev = ev.group_by("model").agg(pl.col("evt_precision").mean(), pl.col("evt_recall").mean())
     C.fig_detection(ev, "evt_", ASSETS, "Disruption-hour detection (per-station P90 threshold)")
 
 
@@ -71,18 +82,28 @@ def electricity():
     pooled = summarize(preds, [1], baseline_model="seasonal_naive_24h")
     # single pooled row per model: average over delivery hours
     pooled = metrics.group_by("model").agg(
-        pl.col("mae").mean(), pl.col("rmse").mean(),
-        pl.col("skill_vs_baseline_pct").mean(), pl.col("coverage_80").mean(),
-        pl.lit("day_ahead_price").alias("target"), pl.lit(1).alias("h"),
+        pl.col("mae").mean(),
+        pl.col("rmse").mean(),
+        pl.col("skill_vs_baseline_pct").mean(),
+        pl.col("coverage_80").mean(),
+        pl.lit("day_ahead_price").alias("target"),
+        pl.lit(1).alias("h"),
         pl.len().alias("n"),
     )
     C.fig_model_accuracy(
-        pooled, "day_ahead_price", 1, ASSETS,
+        pooled,
+        "day_ahead_price",
+        1,
+        ASSETS,
         "Day-ahead price forecasting — German bidding zone\n"
         "MAE pooled over all 24 delivery hours · daily pre-auction origins",
     )
     C.fig_accuracy_runtime(
-        pooled, secs, "day_ahead_price", 1, ASSETS,
+        pooled,
+        secs,
+        "day_ahead_price",
+        1,
+        ASSETS,
         "Accuracy vs compute — day-ahead prices",
     )
     series = "day_ahead_price/DE-LU"
@@ -91,7 +112,10 @@ def electricity():
     day = neg["origin_ts"].unique().sort()[-1] if neg.height else None
     if day:
         C.fig_actual_vs_predicted(
-            preds, series, day, ASSETS,
+            preds,
+            series,
+            day,
+            ASSETS,
             f"Forecasting a negative-price day — DE-LU day-ahead, delivery {day[:10]}",
         )
     # scheduling

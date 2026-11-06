@@ -39,12 +39,16 @@ class TestSimulation:
                         "tier": "t",
                         "model": "m",
                         "series_id": "day_ahead_price/DE-LU",
-                        "origin_ts": f"2026-01-0{day+1}",
+                        "origin_ts": f"2026-01-0{day + 1}",
                         "h": i + 1,
                         "y_true": v,
                         "y_pred": v,  # perfect prediction
-                        "q05": None, "q10": None, "q25": None,
-                        "q75": None, "q90": None, "q95": None,
+                        "q05": None,
+                        "q10": None,
+                        "q25": None,
+                        "q75": None,
+                        "q90": None,
+                        "q95": None,
                     }
                 )
         preds = pl.DataFrame(rows)
@@ -64,11 +68,20 @@ class TestAnalysis:
                     y = 100 + rng.normal(size=1)[0]
                     rows.append(
                         {
-                            "experiment": "e", "tier": "t", "model": model,
-                            "series_id": "avg_delay_min/X", "origin_ts": f"o{o}",
-                            "h": h, "y_true": y, "y_pred": y + abs(rng.normal()) * scale,
-                            "q05": None, "q10": None, "q25": None,
-                            "q75": None, "q90": None, "q95": None,
+                            "experiment": "e",
+                            "tier": "t",
+                            "model": model,
+                            "series_id": "avg_delay_min/X",
+                            "origin_ts": f"o{o}",
+                            "h": h,
+                            "y_true": y,
+                            "y_pred": y + abs(rng.normal()) * scale,
+                            "q05": None,
+                            "q10": None,
+                            "q25": None,
+                            "q75": None,
+                            "q90": None,
+                            "q95": None,
                         }
                     )
         return pl.DataFrame(rows)
@@ -81,28 +94,33 @@ class TestAnalysis:
 
     def test_event_detection_negative_prices(self):
         df = self._frame().with_columns(
-            pl.when(pl.int_range(pl.len()) % 7 == 0)
-            .then(-10.0)
-            .otherwise(50.0)
-            .alias("y_true_val")
+            pl.when(pl.int_range(pl.len()) % 7 == 0).then(-10.0).otherwise(50.0).alias("y_true_val")
         )
         df = df.with_columns(
             pl.col("y_true").alias("y_true"),
         )
         # synthesize price-like series
         rows = []
-        rng = np.random.default_rng(1)
         for model in ["a", "b"]:
             for i in range(200):
                 y = -20.0 if i % 10 == 0 else 60.0
                 p = y if model == "a" else 60.0  # 'a' perfect, 'b' never predicts neg
                 rows.append(
                     {
-                        "experiment": "e", "tier": "t", "model": model,
-                        "series_id": "day_ahead_price/DE-LU", "origin_ts": f"o{i//24}",
-                        "h": (i % 24) + 1, "y_true": y, "y_pred": p,
-                        "q05": None, "q10": None, "q25": None,
-                        "q75": None, "q90": None, "q95": None,
+                        "experiment": "e",
+                        "tier": "t",
+                        "model": model,
+                        "series_id": "day_ahead_price/DE-LU",
+                        "origin_ts": f"o{i // 24}",
+                        "h": (i % 24) + 1,
+                        "y_true": y,
+                        "y_pred": p,
+                        "q05": None,
+                        "q10": None,
+                        "q25": None,
+                        "q75": None,
+                        "q90": None,
+                        "q95": None,
                     }
                 )
         ev = event_detection_metrics(pl.DataFrame(rows), {}, [1])
