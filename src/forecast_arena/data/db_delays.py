@@ -50,19 +50,20 @@ def build_hourly_aggregates(raw_dir: Path, out_path: Path) -> Path:
                    st.n_arrivals_ld, st.n_delayed_ld, st.sum_delay_ld, st.n_canceled_ld
             FROM (
                 SELECT station_name AS station, eva,
+                       train_type IN ('ICE','IC','EC','ECE','NJ','RJ') AS ld,
                        date_trunc('hour', arrival_planned_time) AS hour_start,
                        count(*) AS n_arrivals,
                        sum(CASE WHEN delay_in_min > 5 THEN 1 ELSE 0 END) AS n_delayed,
                        sum(coalesce(delay_in_min, 0)) AS sum_delay,
                        sum(CASE WHEN arrival_is_canceled THEN 1 ELSE 0 END) AS n_canceled,
-                       sum(CASE WHEN train_type IN ('ICE','IC','EC','ECE','NJ','RJ') THEN 1 ELSE 0 END) AS n_arrivals_ld,
-                       sum(CASE WHEN train_type IN ('ICE','IC','EC','ECE','NJ','RJ') AND delay_in_min > 5 THEN 1 ELSE 0 END) AS n_delayed_ld,
-                       sum(CASE WHEN train_type IN ('ICE','IC','EC','ECE','NJ','RJ') THEN coalesce(delay_in_min, 0) ELSE 0 END) AS sum_delay_ld,
-                       sum(CASE WHEN train_type IN ('ICE','IC','EC','ECE','NJ','RJ') AND arrival_is_canceled THEN 1 ELSE 0 END) AS n_canceled_ld
+                       sum(ld) AS n_arrivals_ld,
+                       sum(CASE WHEN ld AND delay_in_min > 5 THEN 1 ELSE 0 END) AS n_delayed_ld,
+                       sum(CASE WHEN ld THEN coalesce(delay_in_min, 0) ELSE 0 END) AS sum_delay_ld,
+                       sum(CASE WHEN ld AND arrival_is_canceled THEN 1 ELSE 0 END) AS n_canceled_ld
                 FROM read_parquet({files!r})
                 WHERE arrival_planned_time IS NOT NULL
                   AND train_type NOT IN ('Bus')
-                GROUP BY 1, 2, 3
+                GROUP BY 1, 2, 3, 4
             ) st
             JOIN (VALUES {eva_expr}) s(station, eva) ON st.eva = s.eva
         )

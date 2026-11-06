@@ -460,7 +460,7 @@ provides-extras = ["ml", "dashboard", "plots", "foundation"]
 [package.metadata.requires-dev]
 dev = [
     { name = "pytest", specifier = ">=8" },
-    { name = "ruff", specifier = ">=0.5" },
+    { name = "ruff", specifier = ">=0.17,<0.18" },
 ]
 
 [[package]]

@@ -140,7 +140,7 @@ class TestGBM:
         np.testing.assert_allclose(X[1:, lag1_col], target[:-1], rtol=1e-5)
 
     def test_lightgbm_predicts_sine(self):
-        lightgbm = pytest.importorskip("lightgbm")
+        pytest.importorskip("lightgbm")
         h = _daily_cycle(24 * 40, noise=0.1, seed=3)
         m = LightGBMModel(n_estimators=80)
         m.set_calendar(np.arange(len(h)) % 168)

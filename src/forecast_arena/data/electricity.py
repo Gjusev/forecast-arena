@@ -61,9 +61,7 @@ def fetch_smard_series(
         df.unique(subset="ts_ms", keep="last")
         .sort("ts_ms")
         .with_columns(
-            (
-                pl.col("ts_ms") * 1_000
-            )  # ms -> us epoch, then cast to tz-aware Berlin
+            (pl.col("ts_ms") * 1_000)  # ms -> us epoch, then cast to tz-aware Berlin
             .cast(pl.Datetime("us", "UTC"))
             .dt.convert_time_zone("Europe/Berlin")
             .alias("timestamp")

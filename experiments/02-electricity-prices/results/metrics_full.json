@@ -1,0 +1,6 @@
+{
+  "thresholds": {
+    "day_ahead_price/DE-LU": 593.0789999999974
+  },
+  "baseline": "seasonal_naive_24h"
+}
