@@ -1,14 +1,14 @@
 ---
 title: Forecast Arena
 emoji: ⚡
-colorFrom: blue
-colorTo: indigo
+colorFrom: yellow
+colorTo: gray
 sdk: gradio
 sdk_version: "5.50.0"
 app_file: app.py
 pinned: true
 license: mit
-short_description: AI vs Reality — forecasting benchmarks on real data
+short_description: Replay, rank and duel AI vs classical forecasts on real data
 ---
 
 # forecast-arena dashboard

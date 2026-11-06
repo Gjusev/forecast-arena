@@ -1,5 +1,6 @@
 gradio>=5.0
 matplotlib>=3.8
+plotly>=5.20
 pandas>=2.2
 polars>=1.0
 numpy>=1.26
