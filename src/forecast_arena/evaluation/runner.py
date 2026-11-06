@@ -139,8 +139,11 @@ def run_benchmark(
     for model in models:
         t_model = 0.0
         for origin in origins:
-            if (model.name, origin) in done:
-                continue  # resumability: (model, origin) already stored
+            # resumability: stored rows carry the origin's timestamp label, so
+            # compare against that label (origins themselves are grid indices)
+            o_label = (origin_datetimes or {}).get(origin, str(origin))
+            if (model.name, o_label) in done:
+                continue
             histories = {
                 sid: impute_hour_of_week(v[:origin])[-max_context:]
                 for sid, v in spec.series.items()
@@ -158,7 +161,7 @@ def run_benchmark(
                 last_prepare[model.name] = origin
             t_prep = time.perf_counter() - t0
             t_model += t_prep
-            o_ts = (origin_datetimes or {}).get(origin, str(origin))
+            o_ts = o_label
             for sid, h in histories.items():
                 known = None
                 if grid_how is not None and origin + spec.horizon <= len(grid_how):

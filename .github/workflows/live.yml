@@ -1,0 +1,41 @@
+name: Live
+
+on:
+  schedule:
+    # 00:45 CET (23:45 UTC). At this moment delivery day D+1's prices are NOT
+    # yet published (that day's auction runs at 12:00 CET and publishes ~12:45),
+    # while the previous day is fully published. The commit is the publication.
+    - cron: "45 23 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live-forecast
+  cancel-in-progress: false
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - name: Install all model extras
+        run: uv sync --group dev --extra ml --extra foundation
+      - name: Forecast tomorrow, score yesterday
+        run: uv run --no-sync python scripts/live_forecast.py
+      - name: Commit the forecast (this is the publication)
+        run: |
+          git config user.name "forecast-arena live"
+          git config user.email "noreply@github.com"
+          git add live/
+          if git diff --cached --quiet; then
+            echo "Nothing new to publish"
+          else
+            git commit -m "Live forecast: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+          fi

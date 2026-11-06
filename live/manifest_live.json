@@ -1,0 +1,20 @@
+{
+  "experiment": "electricity",
+  "tier": "live",
+  "n_series": 1,
+  "horizon": 24,
+  "origins": [
+    51288
+  ],
+  "models": [
+    "timesfm_3_0"
+  ],
+  "python": "3.12.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "started": "2026-11-06T17:13:47",
+  "finished": "2026-11-06T17:13:47",
+  "wall_seconds": null,
+  "per_model_seconds": {
+    "timesfm_3_0": 4.3943025999979
+  }
+}

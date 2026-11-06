@@ -785,6 +785,94 @@ from committed result files; nothing is inferred live.
 """
 
 
+def _fetch_live(name: str) -> dict | None:
+    """Live JSONs: GitHub raw first (always fresh), local live/ as fallback."""
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(
+            f"https://raw.githubusercontent.com/Gjusev/forecast-arena/main/live/{name}", timeout=10
+        ) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception:
+        local = ROOT / "live" / name
+        if local.exists():
+            return json.loads(local.read_text(encoding="utf-8"))
+    return None
+
+
+def live_view():
+    pend = _fetch_live("pending.json")
+    scores = _fetch_live("scores.json")
+    if not pend or pend.get("status") != "pending":
+        note = (pend or {}).get("note") or "No live forecast published yet."
+        note += (
+            " The daily workflow publishes at 00:45 CET; "
+            "the auction it predicts runs at 12:00 and publishes ~12:45."
+        )
+        return None, note
+    e = EXPS["Power prices"]
+    fig = go.Figure()
+    band_added = False
+    for m in sorted(pend["forecasts"]):
+        d = pend["forecasts"][m]
+        fig.add_trace(
+            go.Scatter(
+                x=list(range(24)),
+                y=d["point"],
+                name=label(m),
+                mode="lines",
+                line={"color": color(m), "width": 3, "dash": dash(m)},
+                hovertemplate="%{y:.1f}",
+            )
+        )
+        if not band_added and d["q10"] and d["q10"][0] is not None:
+            x = list(range(24))
+            fig.add_trace(
+                go.Scatter(
+                    x=x + x[::-1],
+                    y=d["q90"] + d["q10"][::-1],
+                    fill="toself",
+                    fillcolor=color(m),
+                    opacity=0.15,
+                    line={"width": 0},
+                    name=f"80% range, {label(m)}",
+                    hoverinfo="skip",
+                )
+            )
+            band_added = True
+    styled(
+        fig,
+        f"Delivery day {pend['delivery_day']}: tomorrow's prices, forecast before the auction",
+        e["x"],
+        e["y"],
+        h=470,
+    )
+    md = (
+        f"**Published {pend['published_utc']}** - committed to GitHub before the 12:00 CET "
+        "auction (results ~12:45). The models saw only prices up to the day before delivery."
+    )
+    if scores and scores.get("scored"):
+        rows = scores["leaderboard"]
+        head = chr(10).join(
+            [
+                "",
+                "## Score so far",
+                "",
+                "| Model | Mean miss (EUR/MWh) | Days | 80% range held |",
+                "|---|---|---|---|",
+            ]
+        )
+        body = []
+        for r in rows:
+            cov = f"{r['coverage_80']:.0%}" if r.get("coverage_80") is not None else "-"
+            body.append(f"| {label(r['model'])} | {r['mean_mae']} | {r['n']} | {cov} |")
+        md += head + chr(10).join(body)
+        md += chr(10)
+        md += "Each forecast is scored once its delivery day is published. Single days vary a lot; the mean is the real signal."
+    return fig, md
+
+
 def build_app(style_kwargs: dict | None = None) -> gr.Blocks:
     exps = list(EXPS)
     with gr.Blocks(title="forecast-arena — AI vs Reality", **(style_kwargs or {})) as app:
@@ -796,6 +884,12 @@ def build_app(style_kwargs: dict | None = None) -> gr.Blocks:
             gr.Markdown(start_story(), elem_id="fa-start")
             with gr.Accordion("Glossary: every term on this page in plain words", open=False):
                 gr.Markdown(GLOSSARY_MD)
+
+        with gr.Tab("Live"):
+            li_plot = gr.Plot(show_label=False)
+            li_md = gr.Markdown()
+            gr.Button("Refresh").click(live_view, None, [li_plot, li_md])
+            app.load(live_view, None, [li_plot, li_md])
 
         with gr.Tab("Replay a forecast"):
             gr.Markdown(

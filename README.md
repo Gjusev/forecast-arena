@@ -108,6 +108,10 @@ reads the same committed result files:
 - **Leaderboard.** Rank by error or skill, per horizon, with runtimes.
 - **Head to head.** Any two models, every forecast as one dot, win rate.
 - **Does it pay?** Cumulative scheduling savings per model against perfect foresight.
+- **Live.** Every day at 00:45 CET the workflow publishes forecasts for the *next*
+  day's auction, committed before that auction runs (12:00 CET). Once the day's
+  prices are out, the same workflow scores them: a rolling, tamper-evident
+  leaderboard. See `live/` and `scripts/live_forecast.py`.
 
 ```bash
 uv run --extra dashboard python dashboard/app.py   # -> http://localhost:7860
