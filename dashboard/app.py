@@ -547,7 +547,8 @@ HEAD = """
 CSS = f"""
 :root, .dark {{ --fa-ink:{INK}; --fa-paper:{PAPER}; --fa-signal:{SIGNAL}; --fa-dim:{DIM}; }}
 body, gradio-app, .gradio-container, .main, .wrap {{ background:{INK} !important; }}
-.gradio-container {{ max-width: 1280px !important; font-family: Barlow, Arial, sans-serif !important; color:{PAPER}; }}
+.gradio-container {{ margin: 0 auto !important; max-width: 1440px !important; width: 100% !important;
+  font-family: Barlow, Arial, sans-serif !important; color:{PAPER}; }}
 .gradio-container h1, .gradio-container h2, .gradio-container h3 {{ font-family:"Barlow Condensed", Arial Narrow, sans-serif; letter-spacing:-0.01em; }}
 #fa-hero {{ padding: 24px 0 8px; }}
 #fa-hero .bar {{ display:flex; align-items:center; gap:14px; font-family:"Barlow Condensed"; font-weight:700; font-size:22px; }}
@@ -573,6 +574,22 @@ table, td, th {{ font-variant-numeric: tabular-nums; }}
 button.primary {{ background:{SIGNAL} !important; color:{INK} !important; border:0 !important; font-weight:600; }}
 button.primary:hover {{ filter: brightness(1.08); }}
 button.primary:active {{ transform: translateY(1px); }}
+@media (max-width: 640px) {{
+  #fa-hero h1 {{ font-size: clamp(44px, 15vw, 72px); margin: 20px 0 10px; }}
+  #fa-hero .bar {{ flex-wrap: wrap; font-size: 19px; }}
+  #fa-hero .bar svg {{ width: 30px; height: 30px; }}
+  #fa-hero .bar a {{ margin-left: 0; flex-basis: 100%; }}
+  #fa-hero p.lede {{ font-size: 17px; }}
+  #fa-hero .v {{ padding: 16px; }}
+  #fa-hero .v b {{ font-size: 38px; }}
+  #fa-hero .v strong {{ font-size: 16px; }}
+  #fa-hero .v span {{ font-size: 15px; }}
+  #fa-start p, #fa-start li {{ font-size: 16px; }}
+  #fa-start h2 {{ font-size: 28px; margin-top: 20px; }}
+  .fa-explain {{ padding: 12px 14px !important; }}
+  .fa-explain, .fa-explain p {{ font-size: 16px !important; line-height: 1.5 !important; }}
+  .gradio-container .tabitem {{ padding: 0 4px; }}
+}}
 footer {{ display:none !important; }}
 """
 
