@@ -119,6 +119,46 @@ def collect_station(
     return parse_rows(fetch_json(url) or [], station["zone"])
 
 
+def hf_sync(repo_id: str, merged: pl.DataFrame) -> int:
+    """Sync month-partitioned parquet files to a Hugging Face dataset repo.
+
+    Pulls every months/YYYY-MM.parquet from the repo, merges with the local
+    frame, and re-uploads the partitioned files. Makes a CI run stateless:
+    each run reconstructs the full history from HF plus the fresh API window.
+    """
+    from huggingface_hub import HfApi, hf_hub_download
+
+    api = HfApi()
+    api.create_repo(repo_id, repo_type="dataset", exist_ok=True)
+    remote = empty()
+    pulled = 0
+    try:
+        for f in api.list_repo_files(repo_id, repo_type="dataset"):
+            if f.startswith("months/") and f.endswith(".parquet"):
+                p = Path(hf_hub_download(repo_id, f, repo_type="dataset"))
+                remote = pl.concat([remote, pl.read_parquet(p)])
+                pulled += 1
+    except Exception as exc:  # noqa: BLE001 - first run has no files yet
+        print(f"hf pull: {exc} (pulled {pulled} file(s))")
+    combined, _ = merge(remote, merged)
+    months_dir = PARQUET.parent / "months"
+    months_dir.mkdir(parents=True, exist_ok=True)
+    by_month = combined.with_columns(pl.col("timestamp").dt.strftime("%Y-%m").alias("month"))
+    uploaded = 0
+    for (month,), part in by_month.group_by("month"):
+        f = months_dir / f"{month}.parquet"
+        part.drop("month").write_parquet(f)
+        api.upload_file(
+            path_or_fileobj=f,
+            path_in_repo=f"months/{month}.parquet",
+            repo_id=repo_id,
+            repo_type="dataset",
+            commit_message=f"collect {month}",
+        )
+        uploaded += 1
+    return uploaded
+
+
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--stations", help="comma-separated station shortnames, e.g. KAUB,CELLE")
@@ -126,6 +166,10 @@ def main(argv: list[str] | None = None) -> None:
         "--full-backfill", action="store_true", help="refetch the full API window for all stations"
     )
     ap.add_argument("--max-stations", type=int, help="cap number of stations (quick tests)")
+    ap.add_argument(
+        "--hf-repo",
+        help="dataset repo (e.g. Gjusev/pegelonline) to persist month parquet files to",
+    )
     args = ap.parse_args(argv)
 
     t0 = time.monotonic()
@@ -154,6 +198,9 @@ def main(argv: list[str] | None = None) -> None:
 
     new_latest = merged["timestamp"].max()
     print(f"stations stored: {len(frames)}/{len(stations)}")
+    if args.hf_repo:
+        uploaded = hf_sync(args.hf_repo, merged)
+        print(f"hf sync: {uploaded} month file(s) -> {args.hf_repo}")
     print(f"rows added: {rows_added}")
     print(f"total rows: {merged.height}")
     print(f"latest timestamp: {new_latest}")

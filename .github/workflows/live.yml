@@ -39,3 +39,9 @@ jobs:
             git commit -m "Live forecast: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             git push
           fi
+      - name: Collect river gauges (persist to HF dataset)
+        if: always()
+        continue-on-error: true
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: uv run --no-sync python scripts/collect_pegelonline.py --hf-repo Gjusev/pegelonline
