@@ -54,11 +54,29 @@ foundation models and laptop-trained gradient boosting are separated by
 0.08 minutes. On the worst disruption day in the window (Frankfurt, 2026-02-05,
 60+ min average delay), *all* models forecast a flat 5–10 min day.
 
-### Electricity prices
+### Electricity prices (DE-LU day-ahead, 1,408 daily pre-auction origins, 2021–2026)
 
-🚧 full-tier results computing now — this section fills from the verified
-assets when the run completes (same policy: no number without a predictions
-file behind it).
+MAE €/MWh pooled over all 24 delivery hours, vs **seasonal naive 28.20**:
+
+| Model | MAE | Skill vs naive | Neg-price F1 |
+|---|---|---|---|
+| Chronos-2 | **19.27** | +33.1% | 0.50 |
+| Timestral 209M | 19.53 | +32.4% | **0.57** |
+| TimesFM 3.0 | 19.82 | +31.2% | 0.48 |
+| Timestral 28M | 19.82 | +31.6% | 0.53 |
+| XGBoost | 23.48 | +19.1% | 0.23 |
+| LightGBM | 24.14 | +17.2% | 0.19 |
+
+**Reading:** here foundation models *do* clearly beat gradient boosting
+(+31–33% vs +17–19%) — the opposite of the delays result. Scheduling 4 MWh
+of flexible daily load on the best model's forecast saved **40.2 €/day
+(−17%)** vs a fixed midday schedule, capturing **75% of the perfect-foresight
+oracle's** saving (wholesale costs only — not household bills). GBMs were
+nearly blind to negative-price hours; foundation models detect them at
+F1 ≈ 0.5–0.57.
+
+Charts: [`assets/charts/`](assets/charts/) · full reports:
+[`reports/`](reports/).
 
 ## Methodology (short version)
 

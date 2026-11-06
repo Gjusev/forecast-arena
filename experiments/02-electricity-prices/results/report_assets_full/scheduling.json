@@ -1,0 +1,9 @@
+{
+  "best_model": "chronos_2",
+  "n_days": 1402,
+  "fixed_midday_cost": 236.73297432239661,
+  "model_cost": 196.56635520684733,
+  "oracle_cost": 182.77452924393722,
+  "savings_vs_fixed_eur": 40.16661911554922,
+  "regret_vs_oracle_eur": 13.791825962910128
+}
