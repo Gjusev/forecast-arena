@@ -29,7 +29,8 @@ from forecast_arena.visualization.charts import (
 matplotlib.use("Agg")
 use_style()
 
-ROOT = Path(__file__).resolve().parents[1]
+_here = Path(__file__).resolve().parent
+ROOT = _here if (_here / "experiments").exists() else _here.parent
 EXP01 = ROOT / "experiments/01-train-delays/results"
 EXP02 = ROOT / "experiments/02-electricity-prices/results"
 
