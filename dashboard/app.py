@@ -78,6 +78,20 @@ EXPS = {
         "primary_target": "wind_total",
         "by_h": True,
     },
+    "LoL comebacks": {
+        "dir": ROOT / "experiments/06-lol-comebacks/results",
+        "prefix": "gold_diff/",
+        "unit": "g",
+        "y": "gold difference (blue minus red)",
+        "x": "game-minutes after the forecast (minute 15)",
+        "x_offset": 0,
+        "primary_target": "gold_diff",
+        "by_h": True,
+        "hud": "min",
+        "h_choices": ["1", "5", "10", "15", "20"],
+        "naive": "persistence",
+        "naive_short": "the gap holds",
+    },
 }
 REAL_MODELS = [m for m, f in MODEL_FAMILY.items() if f != "baseline"]
 
@@ -103,15 +117,28 @@ def nice_ts(s: str) -> str:
         return s
 
 
+def origin_label(exp: str, origin: str) -> str:
+    """Per-exp origin caption; synthetic game-minute grids don't get a fake date."""
+    if EXPS[exp].get("hud") == "min":
+        m = (datetime.fromisoformat(str(origin)[:19]) - datetime(2000, 1, 1)).total_seconds() / 60
+        return f"game-minute {int(m)}"
+    return nice_ts(str(origin))
+
+
 # ------------------------------------------------------------------ data
 
 
 @cache
 def preds(exp: str) -> pl.DataFrame:
     e = EXPS[exp]
-    p = pl.read_parquet(e["dir"] / "predictions.parquet")
+    path = e["dir"] / "predictions.parquet"
+    if not path.exists():
+        return pl.DataFrame()
+    p = pl.read_parquet(path)
     tiers = set(p["tier"].unique().to_list())
-    tier = next(t for t in ("full", "pilot", "smoke") if t in tiers)
+    tier = next((t for t in ("full", "pilot", "smoke") if t in tiers), None)
+    if tier is None:
+        return pl.DataFrame()
     return p.filter((pl.col("tier") == tier) & pl.col("series_id").str.starts_with(e["prefix"]))
 
 
@@ -137,6 +164,8 @@ def manifest(exp: str) -> dict:
 @cache
 def per_origin(exp: str) -> pl.DataFrame:
     """MAE of every model on every single forecast (series x origin)."""
+    if preds(exp).height == 0:
+        return pl.DataFrame()
     return (
         preds(exp)
         .filter(pl.col("y_true").is_finite() & pl.col("y_pred").is_finite())
@@ -261,7 +290,7 @@ def replay(exp, series, idx, picked, band, revealed, pick):
         xanchor="left",
         font={"color": SIGNAL, "size": 13},
     )
-    when = f"Forecast made **{nice_ts(origin)}** · forecast {idx + 1} of {len(orgs)}"
+    when = f"Forecast made **{origin_label(exp, origin)}** · forecast {idx + 1} of {len(orgs)}"
     if not revealed:
         styled(fig, f"{series}: what will happen next?", e["x"], e["y"])
         return fig, HOW_TO_READ_REPLAY, when
@@ -316,7 +345,11 @@ then press **Reveal reality**."""
 
 
 def when_label(exp: str, x: int) -> str:
-    return f"{x} h after the forecast" if exp == "Train delays" else f"at {x:02d}:00"
+    if exp == "Train delays":
+        return f"{x} h after the forecast"
+    if exp == "LoL comebacks":
+        return f"{x} game-minutes into the forecast"
+    return f"at {x:02d}:00"
 
 
 def replay_story(exp, actual: pl.DataFrame, g: pl.DataFrame, rows: list[dict]) -> str:
@@ -365,12 +398,13 @@ def board(exp, h, metric):
     if lb.height == 0:
         empty = pl.DataFrame({"Model": [], "Family": []})
         return go.Figure(), empty, "No results for this experiment yet - run the benchmark first."
+    nshort = EXPS[exp].get("naive_short", "'same as yesterday'")
     if metric == SKILL:
         lb = lb.sort("skill", descending=True)
         vals, fmt, xlab = (
             lb["skill"].to_list(),
             "{:+.1f}%",
-            "how much smaller the miss is than 'same as yesterday', % (longer bar = better)",
+            f"how much smaller the miss is than {nshort}, % (longer bar = better)",
         )
     else:
         vals, fmt, xlab = (
@@ -392,8 +426,11 @@ def board(exp, h, metric):
         )
     )
     fig.update_yaxes(autorange="reversed")
+    hud = EXPS[exp].get("hud", "h")
     title = (
-        f"{exp}, {int(h)} h ahead" if EXPS[exp]["by_h"] else f"{exp}, pooled over 24 delivery hours"
+        f"{exp}, {int(h)} {hud} ahead"
+        if EXPS[exp]["by_h"]
+        else f"{exp}, pooled over 24 delivery hours"
     )
     styled(fig, title, xlab, "", h=440).update_layout(hovermode="closest", showlegend=False)
 
@@ -403,7 +440,7 @@ def board(exp, h, metric):
             "Model": names,
             "Family": [FAMILY_NAME[MODEL_FAMILY.get(m, "baseline")] for m in lb["model"].to_list()],
             f"Average miss ({EXPS[exp]['unit']})": lb["mae"].round(2).to_list(),
-            "Better than 'same as yesterday'": [f"{v:+.1f}%" for v in lb["skill"].to_list()],
+            f"Better than {nshort}": [f"{v:+.1f}%" for v in lb["skill"].to_list()],
             "Reality inside the 80% range": [
                 f"{c:.0%}" if c == c and c is not None else "—" for c in lb["coverage"].to_list()
             ],
@@ -418,7 +455,9 @@ def board(exp, h, metric):
 def board_story(exp: str, lb: pl.DataFrame, h) -> str:
     unit = EXPS[exp]["unit"]
     best = lb.sort("mae").row(0, named=True)
-    naive = lb.filter(pl.col("model") == "seasonal_naive_24h").row(0, named=True)
+    naive = lb.filter(pl.col("model") == EXPS[exp].get("naive", "seasonal_naive_24h")).row(
+        0, named=True
+    )
     fm, gb = best_of(lb, "foundation"), best_of(lb, "ml")
     if exp == "Weather":
         return (
@@ -445,6 +484,15 @@ def board_story(exp: str, lb: pl.DataFrame, h) -> str:
             f"{best['skill']:.0f}% more accurate. The best pretrained AI model and the best "
             f"classic machine-learning model are only **{abs(gb['mae'] - fm['mae']):.2f} {unit}** "
             "apart: practically a tie."
+        )
+    if exp == "LoL comebacks":
+        return (
+            f"**In plain words.** We keep only professional matches where one team was clearly "
+            f"behind at minute 15 (2,000+ gold down) and ask every model: does the trailing team "
+            f"pull level within the next 20 game-minutes? The best model ({label(best['model'])}) "
+            f"misses the gold gap by **{best['mae']:.0f} {unit}** on average; the honest rule "
+            f"'the gap stays as it is' misses by {naive['mae']:.0f}. How often each model "
+            f"dared to call a comeback is in the analysis below."
         )
     return (
         f"**In plain words.** The best model (**{label(best['model'])}**) misses the real "
@@ -739,6 +787,7 @@ def video_html() -> str:
 
 def start_story() -> str:
     d, p = leaderboard("Train delays", 1), leaderboard("Power prices", None)
+    w = leaderboard("Weather", 24)
     fm_d, gb_d = best_of(d, "foundation"), best_of(d, "ml")
     fm_p, gb_p = best_of(p, "foundation"), best_of(p, "ml")
     # the single worst hour in the train test window, and what the models expected
@@ -754,7 +803,11 @@ def start_story() -> str:
         & pl.col("model").is_in(REAL_MODELS)
     )["y_pred"]
     station = peak["series_id"].split("/", 1)[1].replace("(Main)", " (Main) ")
-    n = sum(per_origin(e).select("series_id", "origin_ts").unique().height for e in EXPS)
+    n = sum(
+        per_origin(e).select("series_id", "origin_ts").unique().height
+        for e in EXPS
+        if preds(e).height
+    )
     sched_p = EXPS["Power prices"]["dir"] / "report_assets_full/scheduling.json"
     money = ""
     if sched_p.exists():
@@ -766,16 +819,35 @@ def start_story() -> str:
             f"saves **{sc['savings_vs_fixed_eur']:.0f} € a day** compared with always running "
             f"at midday. That is {share:.0%} of what perfect knowledge of the future would save.\n\n"
         )
+    if w.height:
+        fm_w, gb_w = best_of(w, "foundation"), best_of(w, "ml")
+        ml_fam = w.filter(pl.col("model").replace_strict(MODEL_FAMILY, default="baseline") == "ml")
+        gb_worst = ml_fam.sort("skill").row(0, named=True)
+        w_txt = (
+            "**5. Weather: AI leads a day ahead.** Predicting the temperature 24 hours out at "
+            f"30 German city stations, pretrained AI stayed about **{fm_w['skill']:+.0f}%** more "
+            f'accurate than "same as yesterday". The best classic model managed only '
+            f"**{gb_w['skill']:+.0f}%**, and {label(gb_worst['model'])} actually did **"
+            f"{gb_worst['skill']:+.0f}%** - worse than that simple rule. Wind + solar generation "
+            "joins with the same protocol."
+        )
+    else:
+        w_txt = (
+            "**5. New in the arena.** German weather stations (30 cities, hourly temperature) "
+            "and wind + solar generation are benchmarked with the same protocol."
+        )
     return f"""## The question
 New **pretrained AI** forecasting models (the same idea as ChatGPT, but trained on millions of
 number series instead of text) promise to predict almost anything without extra training.
 Do they really beat older, simpler methods on messy real-world data?
 
 ## How we tested it, fairly
-We picked two things Germany runs on: **train delays** at five big stations and
-**wholesale electricity prices**. Then we went back in time and made **{n:,} forecasts**.
-Each time, every model saw exactly the same past data and made its prediction; only then
-did we compare it with what really happened. No model could peek at the future.
+We picked things the world really runs on: **train delays** at five big stations,
+**wholesale electricity prices**, **weather** at 30 German cities and **wind + solar
+generation** - plus **League of Legends** esports matches. Then we went back in time and
+made **{n:,} forecasts**. Each time, every model saw exactly the same past data and made
+its prediction; only then did we compare it with what really happened. No model could
+peek at the future.
 
 ## What we found
 **1. Trains: a tie, and nobody sees a disruption coming.** All serious models were about
@@ -794,9 +866,7 @@ of power.
 {money}**4. The honest catch.** AI is not magic. On trains it was no better than models trained
 in seconds on a laptop, and no model predicts sudden disruptions from history alone.
 
-**5. New in the arena.** German weather stations (30 cities, hourly temperature) and
-wind + solar generation are now benchmarked with the same protocol - early results are in
-the Leaderboard and Replay tabs.
+{w_txt}
 
 Try it yourself in **Replay a forecast**: pick a moment, bet on a model, reveal reality.
 """
@@ -1003,10 +1073,10 @@ def build_app(style_kwargs: dict | None = None) -> gr.Blocks:
 
             def on_exp(exp):
                 s = series_choices(exp)
-                n = len(origins(exp, s[0]))
+                n = len(origins(exp, s[0])) if s else 1
                 return (
-                    gr.update(choices=s, value=s[0]),
-                    gr.update(maximum=n - 1, value=n - 1),
+                    gr.update(choices=s, value=s[0] if s else None),
+                    gr.update(maximum=max(n - 1, 0), value=max(n - 1, 0)),
                     gr.update(choices=[label(m) for m in models_of(exp)]),
                 )
 
@@ -1030,7 +1100,11 @@ def build_app(style_kwargs: dict | None = None) -> gr.Blocks:
         with gr.Tab("Leaderboard"):
             with gr.Row():
                 l_exp = gr.Radio(exps, value=exps[0], label="Experiment")
-                l_h = gr.Radio(["1", "3", "6", "24"], value="1", label="Hours ahead")
+                l_h = gr.Radio(
+                    EXPS[exps[0]].get("h_choices", ["1", "3", "6", "24"]),
+                    value="1",
+                    label="Horizon",
+                )
                 l_metric = gr.Radio(["Average miss", SKILL], value="Average miss", label="Rank by")
             l_story = gr.Markdown(elem_classes="fa-explain")
             l_plot = gr.Plot(show_label=False)
@@ -1041,7 +1115,14 @@ def build_app(style_kwargs: dict | None = None) -> gr.Blocks:
                 elem_classes="fa-note",
             )
             l_outs = [l_plot, l_table, l_story]
-            for comp in (l_exp, l_h, l_metric):
+            l_exp.change(
+                lambda e: gr.update(
+                    choices=EXPS[e].get("h_choices", ["1", "3", "6", "24"]), value="1"
+                ),
+                l_exp,
+                l_h,
+            ).then(board, [l_exp, l_h, l_metric], l_outs)
+            for comp in (l_h, l_metric):
                 comp.change(board, [l_exp, l_h, l_metric], l_outs)
             app.load(board, [l_exp, l_h, l_metric], l_outs)
 
