@@ -14,7 +14,12 @@ from forecast_arena.data.panels import build_electricity_panel, build_train_dela
 from forecast_arena.evaluation.protocol import PanelSpec, freeze_thresholds_on_train
 from forecast_arena.evaluation.runner import run_benchmark, summarize
 from forecast_arena.models.base import Forecaster
-from forecast_arena.models.baselines import HourOfWeekClimatology, SeasonalNaive
+from forecast_arena.models.baselines import (
+    Drift,
+    HourOfWeekClimatology,
+    Persistence,
+    SeasonalNaive,
+)
 from forecast_arena.models.foundation import (
     Chronos2Adapter,
     TimesFMAdapter,
@@ -33,6 +38,8 @@ def _timestral(size: str):
 REGISTRY: dict[str, object] = {
     "seasonal_naive_24h": SeasonalNaive,
     "hour_of_week_climatology": HourOfWeekClimatology,
+    "persistence": Persistence,
+    "drift": Drift,
     "lightgbm": LightGBMModel,
     "xgboost": XGBoostModel,
     "timestral_28m": _timestral("28M"),
@@ -71,6 +78,10 @@ def _panel_for(cfg: dict) -> tuple[list, np.ndarray, dict[str, np.ndarray]]:
         from forecast_arena.data.dwd import build_dwd_panel
 
         return build_dwd_panel(Path(data["hourly"]), start=data.get("start"), end=data.get("end"))
+    if exp == "lol_comebacks":
+        from forecast_arena.data.lol import build_lol_panel
+
+        return build_lol_panel(Path(data["hourly"]), start=data.get("start"), end=data.get("end"))
     if exp == "renewables":
         from forecast_arena.data.energy_charts import build_renewables_panel
 
@@ -113,6 +124,7 @@ def run_experiment(config_path: Path, tier: str, models_override: list[str] | No
     out_dir = Path(cfg.get("results_dir", config_path.parent / "results"))
     origin_dt = {o: str(grid[o]) for o in spec.origins()}
 
+    out_dir.mkdir(parents=True, exist_ok=True)
     provenance.write_provenance(out_dir, cfg["experiment"], tier, cfg)
     preds = run_benchmark(
         cfg["experiment"],

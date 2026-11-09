@@ -66,3 +66,61 @@ class HourOfWeekClimatology(Forecaster):
             means = np.divide(sums, counts, out=np.zeros(24), where=counts > 0)
             point = np.tile(means, int(np.ceil(horizon / 24)))[:horizon]
         return ForecastResult(np.asarray(point, dtype=float))
+
+
+class Persistence(Forecaster):
+    """The next H steps stay where the series is now: y[t+h] = y[t].
+
+    For gold curves inside a single match this is the honest "the gap holds"
+    baseline every forecast must beat.
+    """
+
+    def __init__(self, name: str = "persistence"):
+        self.name = name
+
+    def forecast(self, history, horizon, known_future=None, series_id: str = ""):
+        hist = np.asarray(history, dtype=float)
+        last = hist[-1] if np.isfinite(hist[-1]) else np.nanmean(hist)
+        point = np.full(horizon, float(last))
+        finite = hist[np.isfinite(hist)]
+        if len(finite) >= 5:
+            spread = float(np.std(np.diff(finite))) * np.sqrt(np.arange(1, horizon + 1))
+            qlevels = np.array([0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95])
+            quantiles = (
+                point[:, None]
+                + spread[:, None]
+                * np.array([-1.645, -1.282, -0.674, 0, 0.674, 1.282, 1.645])[None, :]
+            )
+            return ForecastResult(point, quantiles, qlevels)
+        return ForecastResult(point)
+
+
+class Drift(Forecaster):
+    """Extrapolate the recent slope, damped: y[t+h] = y[t] + h * slope / (1 + 0.1*h).
+
+    Damping keeps long horizons from flying away on a noisy local trend.
+    """
+
+    def __init__(self, window: int = 5, name: str = "drift"):
+        self.window = window
+        self.name = name
+
+    def forecast(self, history, horizon, known_future=None, series_id: str = ""):
+        hist = np.asarray(history, dtype=float)
+        tail = hist[-self.window - 1 :]
+        slope = float(np.polyfit(np.arange(len(tail)), tail, 1)[0])
+        h = np.arange(1, horizon + 1)
+        damp = 1.0 / (1.0 + 0.1 * (h - 1))
+        point = hist[-1] + h * slope * damp
+        finite = hist[np.isfinite(hist)]
+        if len(finite) >= 5:
+            resid = finite[1:] - finite[:-1]
+            spread = float(np.std(resid)) * np.sqrt(h)
+            qlevels = np.array([0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95])
+            quantiles = (
+                point[:, None]
+                + spread[:, None]
+                * np.array([-1.645, -1.282, -0.674, 0, 0.674, 1.282, 1.645])[None, :]
+            )
+            return ForecastResult(np.asarray(point, dtype=float), quantiles, qlevels)
+        return ForecastResult(np.asarray(point, dtype=float))

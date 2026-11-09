@@ -13,6 +13,7 @@ EXPERIMENTS = {
     "01": Path("experiments/01-train-delays"),
     "02": Path("experiments/02-electricity-prices"),
     "03": Path("experiments/03-dwd-weather"),
+    "06": Path("experiments/06-lol-comebacks"),
     "04": Path("experiments/04-renewables"),
 }
 
@@ -69,6 +70,11 @@ def main(argv: list[str] | None = None) -> int:
 
             out = refresh_raw(Path(args.raw_dir or cfg["data"]["raw_dir"]))
             log.info("dwd hourly cache -> %s", out)
+        elif cfg["experiment"] == "lol_comebacks":
+            from forecast_arena.data.lol import refresh_raw
+
+            out = refresh_raw(Path(args.raw_dir or cfg["data"]["raw_dir"]))
+            log.info("lol gold-per-minute cache -> %s", out)
         elif cfg["experiment"] == "renewables":
             from forecast_arena.data.energy_charts import refresh_raw
 
