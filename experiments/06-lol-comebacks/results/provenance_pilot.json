@@ -1,0 +1,61 @@
+{
+  "experiment": "lol_comebacks",
+  "tier": "pilot",
+  "versions": {
+    "python": "3.12.2",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "polars": "2.1.0",
+    "pyarrow": "26.0.1",
+    "duckdb": "2.0.0",
+    "torch": "2.15.0+cpu",
+    "lightgbm": "4.7.0",
+    "xgboost": "3.4.1"
+  },
+  "config": {
+    "protocol": {
+      "horizon": 20,
+      "eval_horizons": [
+        1,
+        5,
+        10,
+        15,
+        20
+      ],
+      "origin_step_hours": 1000000000,
+      "min_train_hours": 15
+    },
+    "tiers": {
+      "smoke": {
+        "series_limit": 30,
+        "models": [
+          "persistence",
+          "drift",
+          "chronos_2"
+        ]
+      },
+      "pilot": {
+        "series_limit": 500
+      },
+      "full": {
+        "series_limit": null
+      }
+    },
+    "experiment": "lol_comebacks",
+    "data": {
+      "raw_dir": "data/raw/lol",
+      "hourly": "data/raw/lol/lol_gold_minute.parquet"
+    },
+    "baseline_model": "persistence",
+    "results_dir": "experiments/06-lol-comebacks/results",
+    "models": [
+      "persistence",
+      "drift",
+      "timestral_28m",
+      "timestral_209m",
+      "chronos_2",
+      "timesfm_3_0"
+    ]
+  }
+}

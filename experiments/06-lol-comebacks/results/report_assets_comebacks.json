@@ -1,0 +1,72 @@
+{
+  "tier": "full",
+  "pre_registered": {
+    "threshold_gold_diff_at_15": -2000,
+    "reality_flip": "gold_diff >= 0 at any minute 16..35",
+    "note": "constant fixed before any forecast was computed"
+  },
+  "eligible_matches": 383,
+  "actually_flipped": 199,
+  "base_rate": 0.52,
+  "models": {
+    "drift": {
+      "predicted": 9,
+      "tp": 5,
+      "fp": 4,
+      "fn": 194,
+      "precision": 0.556,
+      "recall": 0.025,
+      "f1": 0.048
+    },
+    "timesfm_3_0": {
+      "predicted": 23,
+      "tp": 14,
+      "fp": 9,
+      "fn": 185,
+      "precision": 0.609,
+      "recall": 0.07,
+      "f1": 0.126
+    },
+    "chronos_2": {
+      "predicted": 21,
+      "tp": 12,
+      "fp": 9,
+      "fn": 187,
+      "precision": 0.571,
+      "recall": 0.06,
+      "f1": 0.109
+    },
+    "persistence": {
+      "predicted": 1,
+      "tp": 0,
+      "fp": 1,
+      "fn": 199,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "timestral_28M": {
+      "predicted": 11,
+      "tp": 6,
+      "fp": 5,
+      "fn": 193,
+      "precision": 0.545,
+      "recall": 0.03,
+      "f1": 0.057
+    },
+    "timestral_209M": {
+      "predicted": 9,
+      "tp": 5,
+      "fp": 4,
+      "fn": 194,
+      "precision": 0.556,
+      "recall": 0.025,
+      "f1": 0.048
+    }
+  },
+  "honesty_notes": [
+    "ranked matches only (queues 420/440): ARAM and Arena gold curves are excluded as a different process",
+    "matches from the same patch share meta; rows are correlated, not independent samples",
+    "60 s frame resolution: leads that flip and re-flip inside a minute are invisible"
+  ]
+}

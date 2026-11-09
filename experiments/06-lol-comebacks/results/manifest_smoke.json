@@ -1,0 +1,24 @@
+{
+  "experiment": "lol_comebacks",
+  "tier": "smoke",
+  "n_series": 30,
+  "horizon": 20,
+  "origins": [
+    15
+  ],
+  "models": [
+    "persistence",
+    "drift",
+    "chronos_2"
+  ],
+  "python": "3.12.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "started": "2026-11-09T10:22:13",
+  "finished": "2026-11-09T10:22:13",
+  "wall_seconds": null,
+  "per_model_seconds": {
+    "persistence": 0.0006046000003152585,
+    "drift": 0.008843800000249757,
+    "chronos_2": 11.873993700001847
+  }
+}

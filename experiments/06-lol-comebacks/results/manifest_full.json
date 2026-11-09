@@ -1,0 +1,30 @@
+{
+  "experiment": "lol_comebacks",
+  "tier": "full",
+  "n_series": 1419,
+  "horizon": 20,
+  "origins": [
+    15
+  ],
+  "models": [
+    "persistence",
+    "drift",
+    "timestral_28M",
+    "timestral_209M",
+    "chronos_2",
+    "timesfm_3_0"
+  ],
+  "python": "3.12.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "started": "2026-11-09T11:04:56",
+  "finished": "2026-11-09T11:04:56",
+  "wall_seconds": null,
+  "per_model_seconds": {
+    "persistence": 0.11467729999731091,
+    "drift": 0.08779779999713355,
+    "timestral_28M": 21.34653470001649,
+    "timestral_209M": 78.68940300000304,
+    "chronos_2": 44.775030399999196,
+    "timesfm_3_0": 287.74042119998285
+  }
+}
