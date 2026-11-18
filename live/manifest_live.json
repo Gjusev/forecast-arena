@@ -4,17 +4,17 @@
   "n_series": 1,
   "horizon": 24,
   "origins": [
-    51528
+    51552
   ],
   "models": [
     "timesfm_3_0"
   ],
   "python": "3.12.16",
   "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43",
-  "started": "2026-11-17T05:18:58",
-  "finished": "2026-11-17T05:18:58",
+  "started": "2026-11-18T04:47:31",
+  "finished": "2026-11-18T04:47:31",
   "wall_seconds": null,
   "per_model_seconds": {
-    "timesfm_3_0": 7.380366576999961
+    "timesfm_3_0": 10.09141534500003
   }
 }
