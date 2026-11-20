@@ -10,11 +10,11 @@
     "timesfm_3_0"
   ],
   "python": "3.12.16",
-  "platform": "Linux-7.0.0-1020-azure-x86_64-with-glibc2.43",
-  "started": "2026-11-19T04:35:50",
-  "finished": "2026-11-19T04:35:50",
+  "platform": "Linux-7.0.0-1016-aws-x86_64-with-glibc2.43",
+  "started": "2026-11-20T04:23:31",
+  "finished": "2026-11-20T04:23:31",
   "wall_seconds": null,
   "per_model_seconds": {
-    "timesfm_3_0": 7.617071597000006
+    "timesfm_3_0": 0.0
   }
 }
