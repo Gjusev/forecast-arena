@@ -11,10 +11,10 @@
   ],
   "python": "3.12.16",
   "platform": "Linux-7.0.0-1020-azure-x86_64-with-glibc2.43",
-  "started": "2026-11-23T04:03:48",
-  "finished": "2026-11-23T04:03:48",
+  "started": "2026-11-24T07:09:56",
+  "finished": "2026-11-24T07:09:56",
   "wall_seconds": null,
   "per_model_seconds": {
-    "timesfm_3_0": 7.188513789999945
+    "timesfm_3_0": 0.0
   }
 }
