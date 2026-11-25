@@ -11,8 +11,8 @@
   ],
   "python": "3.12.16",
   "platform": "Linux-7.0.0-1020-azure-x86_64-with-glibc2.43",
-  "started": "2026-11-24T07:09:56",
-  "finished": "2026-11-24T07:09:56",
+  "started": "2026-11-25T05:43:41",
+  "finished": "2026-11-25T05:43:41",
   "wall_seconds": null,
   "per_model_seconds": {
     "timesfm_3_0": 0.0
