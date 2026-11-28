@@ -423,6 +423,32 @@
      "mae": 47.283
     }
    }
+  },
+  {
+   "origin_ts": "2026-11-28 00:00:00+01:00",
+   "models": {
+    "chronos_2": {
+     "mae": 39.678,
+     "coverage_80": 0.542
+    },
+    "hour_of_week_climatology": {
+     "mae": 40.689
+    },
+    "lightgbm": {
+     "mae": 23.064
+    },
+    "seasonal_naive_24h": {
+     "mae": 110.055,
+     "coverage_80": 0.333
+    },
+    "timesfm_3_0": {
+     "mae": 45.527,
+     "coverage_80": 0.708
+    },
+    "xgboost": {
+     "mae": 34.474
+    }
+   }
   }
  ],
  "leaderboard": [
@@ -438,33 +464,33 @@
   },
   {
    "model": "lightgbm",
-   "mean_mae": 33.736,
-   "n": 16
-  },
-  {
-   "model": "chronos_2",
-   "mean_mae": 39.991,
-   "n": 16
+   "mean_mae": 33.109,
+   "n": 17
   },
   {
    "model": "xgboost",
-   "mean_mae": 40.097,
-   "n": 16
+   "mean_mae": 39.766,
+   "n": 17
+  },
+  {
+   "model": "chronos_2",
+   "mean_mae": 39.973,
+   "n": 17
   },
   {
    "model": "timesfm_3_0",
-   "mean_mae": 45.019,
-   "n": 16
+   "mean_mae": 45.049,
+   "n": 17
   },
   {
    "model": "seasonal_naive_24h",
-   "mean_mae": 53.376,
-   "n": 16
+   "mean_mae": 56.71,
+   "n": 17
   },
   {
    "model": "hour_of_week_climatology",
-   "mean_mae": 82.452,
-   "n": 16
+   "mean_mae": 79.995,
+   "n": 17
   }
  ]
 }
